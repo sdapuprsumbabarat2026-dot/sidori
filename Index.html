@@ -5,187 +5,233 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #F8FAFC; --bg-card: #FFFFFF; --bg-sidebar: #FFFFFF;
+      --primary: #1E293B; --primary-hover: #0F172A;
+      --accent: #2563EB; --accent-hover: #1D4ED8; --accent-subtle: rgba(37,99,235,0.12);
+      --danger: #DC2626; --danger-hover: #B91C1C; --danger-subtle: rgba(220,38,38,0.12);
+      --success: #16A34A; --success-subtle: rgba(22,163,74,0.12);
+      --warning: #D97706; --warning-subtle: rgba(217,119,6,0.12);
+      --bg: #F8FAFC; --bg-card: #FFFFFF; --bg-sidebar: #FFFFFF; --bg-nav: #FFFFFF;
       --text: #0F172A; --text-secondary: #475569; --text-muted: #94A3B8;
-      --border: #E4E5E7; --primary: #1E293B; --primary-hover: #0F172A;
-      --accent: #2563EB; --accent-hover: #1D4ED8;
-      --danger: #DC2626; --success: #16A34A; --warning: #D97706;
-      --shadow: 0 1px 3px rgba(0,0,0,0.08);
-      --radius: 8px; --radius-sm: 6px;
-      --font: 'Inter', system-ui, sans-serif;
-      --sidebar-w: 240px; --navbar-h: 56px;
+      --border: #E2E8F0; --border-light: #F1F5F9;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.04);
+      --radius-sm: 6px; --radius: 8px; --radius-lg: 12px;
+      --font: 'Roboto', system-ui, -apple-system, sans-serif;
+      --sidebar-w: 256px; --navbar-h: 56px; --bottom-nav-h: 64px;
+      --transition: 200ms ease;
+      --focus-ring: 0 0 0 3px rgba(37,99,235,0.35);
     }
     [data-theme="dark"] {
-      --bg: #0F172A; --bg-card: #1E293B; --bg-sidebar: #1E293B;
+      --primary: #F1F5F9; --primary-hover: #E2E8F0;
+      --accent: #60A5FA; --accent-hover: #93C5FD; --accent-subtle: rgba(96,165,250,0.15);
+      --danger: #EF4444; --danger-hover: #F87171; --danger-subtle: rgba(239,68,68,0.15);
+      --success: #4ADE80; --success-subtle: rgba(74,222,128,0.15);
+      --warning: #FBBF24; --warning-subtle: rgba(251,191,36,0.15);
+      --bg: #0F172A; --bg-card: #1E293B; --bg-sidebar: #1E293B; --bg-nav: #1E293B;
       --text: #F1F5F9; --text-secondary: #94A3B8; --text-muted: #64748B;
-      --border: #334155; --primary: #F1F5F9; --primary-hover: #E2E8F0;
-      --accent: #60A5FA; --accent-hover: #93C5FD;
-      --shadow: 0 1px 3px rgba(0,0,0,0.3);
+      --border: #334155; --border-light: #1E293B;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+      --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 6px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.3);
+      --focus-ring: 0 0 0 3px rgba(96,165,250,0.35);
     }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: var(--font); background: var(--bg); color: var(--text); }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; line-height: 1.5; }
     a { color: var(--accent); text-decoration: none; }
-    input, select, textarea, button { font-family: inherit; font-size: 0.875rem; }
+    input, select, textarea, button { font-family: inherit; }
+    :focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--radius-sm); }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; } }
 
-    .loading-screen { display: flex; justify-content: center; align-items: center; height: 100vh; }
-    .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; }
+    .loading-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; gap: 1rem; }
+    .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .loader-text { font-size: 0.875rem; color: var(--text-secondary); }
 
-    .login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; background: var(--bg); }
-    .login-card { width: 100%; max-width: 380px; background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 2rem; }
-    .login-header { text-align: center; margin-bottom: 1.5rem; }
-    .login-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
-    .login-header p { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem; background: linear-gradient(135deg, var(--bg) 0%, var(--bg-card) 100%); }
+    .login-card { width: 100%; max-width: 400px; background: var(--bg-card); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 2.5rem 2rem 2rem; }
+    .login-logo { width: 48px; height: 48px; background: var(--accent); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; color: #fff; }
+    .login-header { text-align: center; margin-bottom: 2rem; }
+    .login-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text); }
+    .login-header p { font-size: 0.825rem; color: var(--text-secondary); margin-top: 0.25rem; line-height: 1.4; }
 
-    .field { margin-bottom: 1rem; }
-    .field label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text); margin-bottom: 0.3rem; }
-    .field input, .field select { width: 100%; padding: 0.6rem 0.75rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); outline: none; }
-    .field input:focus, .field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
-    .field-error { color: var(--danger); font-size: 0.8rem; margin-bottom: 0.75rem; }
+    .field { margin-bottom: 1.25rem; }
+    .field label { display: block; font-size: 0.825rem; font-weight: 500; color: var(--text); margin-bottom: 0.35rem; }
+    .field input, .field select { width: 100%; height: 44px; padding: 0 0.875rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); outline: none; font-size: 0.875rem; transition: border-color var(--transition), box-shadow var(--transition); }
+    .field input:focus, .field select:focus { border-color: var(--accent); box-shadow: var(--focus-ring); }
+    .field input::placeholder { color: var(--text-muted); }
+    .field-error { color: var(--danger); font-size: 0.8rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.35rem; }
+    .field-success { color: var(--success); font-size: 0.8rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.35rem; }
+    .field-hint { color: var(--text-muted); font-size: 0.75rem; margin-top: 0.25rem; }
 
-    .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.6rem 1.25rem; border-radius: var(--radius-sm); border: none; cursor: pointer; font-weight: 600; font-size: 0.875rem; transition: .15s; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; height: 44px; padding: 0 1.25rem; border-radius: var(--radius-sm); border: none; cursor: pointer; font-weight: 500; font-size: 0.875rem; transition: background var(--transition), opacity var(--transition), box-shadow var(--transition); white-space: nowrap; }
+    .btn:focus-visible { box-shadow: var(--focus-ring); }
     .btn-primary { background: var(--accent); color: #fff; }
     .btn-primary:hover { background: var(--accent-hover); }
-    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-full { width: 100%; }
     .btn-ghost { background: transparent; color: var(--text-secondary); }
     .btn-ghost:hover { background: var(--bg); }
     .btn-danger { background: var(--danger); color: #fff; }
-    .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+    .btn-danger:hover { background: var(--danger-hover); }
+    .btn-sm { height: 36px; padding: 0 0.875rem; font-size: 0.8125rem; }
+    .btn-xs { height: 32px; padding: 0 0.625rem; font-size: 0.75rem; }
+    .btn-icon { width: 44px; height: 44px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); }
 
-    .login-footer { margin-top: 1rem; text-align: center; }
-    .theme-toggle { display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.8rem; color: var(--text-secondary); }
+    .login-footer { margin-top: 1.25rem; text-align: center; }
 
-    /* App Layout */
     .app-layout { display: flex; flex-direction: column; min-height: 100vh; }
-    .navbar { position: fixed; top: 0; left: 0; right: 0; height: var(--navbar-h); background: var(--bg-card); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 1rem; z-index: 100; gap: 0.75rem; }
-    .nav-toggle { background: none; border: none; font-size: 1.25rem; cursor: pointer; padding: 0.25rem; color: var(--text); }
-    .nav-title { font-size: 1rem; font-weight: 700; flex: 1; }
-    .nav-right { display: flex; align-items: center; gap: 0.5rem; }
-    .user-info { font-size: 0.8rem; color: var(--text-secondary); }
 
-    .sidebar { position: fixed; top: var(--navbar-h); left: 0; bottom: 0; width: var(--sidebar-w); background: var(--bg-sidebar); border-right: 1px solid var(--border); transform: translateX(-100%); transition: .2s; z-index: 90; overflow-y: auto; }
+    .navbar { position: fixed; top: 0; left: 0; right: 0; height: var(--navbar-h); background: var(--bg-nav); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 1rem; z-index: 100; gap: 0.75rem; backdrop-filter: blur(8px); }
+    .nav-toggle { flex-shrink: 0; }
+    .nav-title { font-size: 1rem; font-weight: 700; letter-spacing: -0.01em; flex: 1; }
+    .nav-right { display: flex; align-items: center; gap: 0.25rem; flex-shrink: 0; }
+    .user-info { font-size: 0.8125rem; color: var(--text-secondary); padding: 0 0.25rem; }
+
+    .sidebar { position: fixed; top: var(--navbar-h); left: 0; bottom: 0; width: var(--sidebar-w); background: var(--bg-sidebar); border-right: 1px solid var(--border); transform: translateX(-100%); transition: transform var(--transition); z-index: 90; overflow-y: auto; display: flex; flex-direction: column; }
     .sidebar.open { transform: translateX(0); }
-    .sidebar-nav { padding: 0.75rem; display: flex; flex-direction: column; gap: 0.25rem; }
-    .sidebar-nav a { display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0.75rem; border-radius: var(--radius-sm); color: var(--text-secondary); font-size: 0.875rem; font-weight: 500; transition: .15s; }
+    .sidebar-header { display: none; align-items: center; justify-content: space-between; padding: 0.875rem 1rem; border-bottom: 1px solid var(--border); }
+    .sidebar-brand { font-weight: 700; font-size: 0.9rem; color: var(--text); letter-spacing: -0.01em; }
+    .sidebar-scroll { padding: 0.75rem; display: flex; flex-direction: column; gap: 0.25rem; flex: 1; }
+    .sidebar-section-label { font-size: 0.7rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; padding: 0.75rem 0.75rem 0.35rem; }
+    .sidebar-nav a { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0.75rem; border-radius: var(--radius-sm); color: var(--text-secondary); font-size: 0.875rem; font-weight: 500; transition: background var(--transition), color var(--transition); }
     .sidebar-nav a:hover { background: var(--bg); color: var(--text); }
-    .sidebar-nav a.active { background: var(--accent); color: #fff; }
-    .sidebar-icon { font-size: 1rem; }
+    .sidebar-nav a.active { background: var(--accent-subtle); color: var(--accent); font-weight: 600; }
+    .sidebar-nav a.active .sidebar-icon { color: var(--accent); }
+    .sidebar-icon { flex-shrink: 0; display: flex; align-items: center; color: var(--text-muted); transition: color var(--transition); }
+    .sidebar-nav a:hover .sidebar-icon { color: var(--text); }
+    .sidebar-footer { padding: 0.75rem; border-top: 1px solid var(--border); }
 
-    .main { flex: 1; padding: calc(var(--navbar-h) + 1rem) 1rem 5rem; }
+    .main { flex: 1; padding: calc(var(--navbar-h) + 1.25rem) 1rem calc(var(--bottom-nav-h) + 1rem); transition: margin-left var(--transition); }
 
-    .bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-card); border-top: 1px solid var(--border); padding: 0.25rem 0; z-index: 100; }
-    .bottom-nav a { display: flex; flex-direction: column; align-items: center; padding: 0.35rem 0; color: var(--text-muted); font-size: 0.7rem; flex: 1; text-decoration: none; }
+    .bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; right: 0; height: var(--bottom-nav-h); background: var(--bg-nav); border-top: 1px solid var(--border); z-index: 100; padding-bottom: env(safe-area-inset-bottom, 0); }
+    .bottom-nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.15rem; flex: 1; color: var(--text-muted); font-size: 0.65rem; text-decoration: none; transition: color var(--transition); min-height: 44px; }
     .bottom-nav a.active { color: var(--accent); }
-    .nav-icon { font-size: 1.1rem; }
-    .nav-label { margin-top: 0.1rem; }
+    .bottom-nav a .nav-icon { display: flex; align-items: center; }
+    .bottom-nav a .nav-label { font-weight: 500; }
 
     @media (min-width: 768px) {
-      .main { padding-bottom: 1rem; }
+      .sidebar-header { display: flex; }
+      .sidebar { transform: translateX(0); }
+      .sidebar.open { transform: translateX(0); }
+      .main { padding-bottom: 1.25rem; }
       .bottom-nav { display: none !important; }
     }
-    @media (max-width: 767px) {
-      .bottom-nav { display: flex; }
-    }
 
-    /* Shared page styles */
-    .page { max-width: 960px; margin: 0 auto; }
-    .page-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; }
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .page { max-width: 1000px; margin: 0 auto; }
+    .page-title { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem; }
 
-    .filter-bar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
-    .filter-input, .filter-select { padding: 0.45rem 0.6rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-card); color: var(--text); font-size: 0.8rem; }
-    .filter-input { flex: 1; min-width: 180px; }
+    .filter-bar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+    .filter-input, .filter-select { height: 40px; padding: 0 0.75rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-card); color: var(--text); font-size: 0.8125rem; outline: none; transition: border-color var(--transition); }
+    .filter-input:focus, .filter-select:focus { border-color: var(--accent); box-shadow: var(--focus-ring); }
+    .filter-input { flex: 1; min-width: 200px; }
+    .filter-input-wrapper { position: relative; flex: 1; min-width: 200px; }
+    .filter-input-wrapper .filter-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
+    .filter-input-wrapper .filter-input { padding-left: 2.25rem; width: 100%; }
+    .filter-select { min-width: 130px; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.625rem center; appearance: none; padding-right: 2rem; }
 
     .card { background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.25rem; margin-bottom: 1rem; }
-    .card-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; }
-    .empty { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.875rem; }
+    .card-title { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
 
-    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; }
-    .stat-card { background: var(--bg-card); border-radius: var(--radius); padding: 1rem; box-shadow: var(--shadow); text-align: center; }
-    .stat-num { font-size: 1.75rem; font-weight: 700; color: var(--accent); }
-    .stat-label { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .empty { text-align: center; padding: 2.5rem 1rem; color: var(--text-muted); }
+    .empty-icon { margin-bottom: 0.75rem; color: var(--border); }
+    .empty-text { font-size: 0.875rem; margin-bottom: 0.25rem; }
+    .empty-hint { font-size: 0.8rem; color: var(--text-muted); }
 
-    .doc-row { display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px solid var(--border); }
-    .doc-row:last-child { border-bottom: none; }
-    .doc-info { display: flex; flex-direction: column; gap: 0.15rem; }
-    .text-muted { color: var(--text-secondary); font-size: 0.8rem; }
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-card { background: var(--bg-card); border-radius: var(--radius); padding: 1.25rem 1rem; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 0.5rem; }
+    .stat-icon { width: 40px; height: 40px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: #fff; }
+    .stat-icon.total { background: var(--accent); }
+    .stat-icon.draft { background: var(--text-muted); }
+    .stat-icon.review { background: var(--warning); }
+    .stat-icon.selesai { background: var(--success); }
+    .stat-num { font-size: 1.75rem; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+    .stat-label { font-size: 0.8125rem; color: var(--text-secondary); }
 
-    .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+    .badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.55rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; white-space: nowrap; }
     .badge-draft { background: #F1F5F9; color: #475569; }
-    .badge-review { background: #FEF3C7; color: #92400E; }
-    .badge-selesai { background: #DCFCE7; color: #166534; }
+    .badge-review { background: var(--warning-subtle); color: var(--warning); }
+    .badge-selesai { background: var(--success-subtle); color: var(--success); }
+    .badge-admin { background: var(--accent-subtle); color: var(--accent); }
+    .badge-operator { background: #F0F9FF; color: #0369A1; }
+    .badge-viewer { background: #F5F3FF; color: #6D28D9; }
+    .badge-kabid { background: var(--warning-subtle); color: var(--warning); }
     [data-theme="dark"] .badge-draft { background: #334155; color: #CBD5E1; }
-    [data-theme="dark"] .badge-review { background: #78350F; color: #FDE68A; }
-    [data-theme="dark"] .badge-selesai { background: #14532D; color: #86EFAC; }
+    [data-theme="dark"] .badge-operator { background: #0C4A6E; color: #7DD3FC; }
+    [data-theme="dark"] .badge-viewer { background: #3B0764; color: #C4B5FD; }
 
-    .table-wrap { overflow-x: auto; display: none; }
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; display: none; border: 1px solid var(--border); border-radius: var(--radius); }
     .table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-    .table th { text-align: left; padding: 0.6rem 0.75rem; border-bottom: 2px solid var(--border); color: var(--text-secondary); font-weight: 600; cursor: pointer; white-space: nowrap; user-select: none; }
-    .table td { padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--border); }
+    .table th { text-align: left; padding: 0.75rem 0.875rem; border-bottom: 2px solid var(--border); color: var(--text-secondary); font-weight: 600; cursor: pointer; white-space: nowrap; user-select: none; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; }
+    .table th:hover { color: var(--text); }
+    .table td { padding: 0.7rem 0.875rem; border-bottom: 1px solid var(--border-light); vertical-align: middle; }
+    .table tr:last-child td { border-bottom: none; }
+    .table tbody tr { transition: background var(--transition); }
     .table tbody tr:hover { background: var(--bg); }
     .doc-link { color: var(--accent); font-weight: 500; }
+    .doc-link:hover { text-decoration: underline; }
 
     .card-list { display: flex; flex-direction: column; gap: 0.5rem; }
-    .doc-card { background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 0.75rem 1rem; }
-    .doc-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; }
+    .doc-card { background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 0.875rem 1rem; transition: box-shadow var(--transition); }
+    .doc-card:hover { box-shadow: var(--shadow-md); }
+    .doc-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.35rem; }
     .doc-card-meta { display: flex; gap: 1rem; font-size: 0.75rem; color: var(--text-secondary); }
-    .hide-mobile { display: none; }
-    @media (min-width: 768px) { .hide-mobile { display: table-cell; } }
 
     @media (min-width: 768px) { .table-wrap { display: block; } .card-list { display: none; } }
+    @media (max-width: 767px) { .hide-mobile { display: none !important; } }
 
     .form-card { max-width: 600px; }
     .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .file-current { margin-bottom: 0.5rem; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem; }
-    .form-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+    @media (max-width: 480px) { .field-row { grid-template-columns: 1fr; } }
+    .file-current { font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: var(--bg); border-radius: var(--radius-sm); margin-bottom: 0.5rem; }
+    .form-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border); }
 
-    .back-link { display: inline-block; margin-bottom: 1rem; font-size: 0.85rem; color: var(--text-secondary); }
-    .detail-card { background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.25rem; }
-    .detail-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+    .back-link { display: inline-flex; align-items: center; gap: 0.35rem; margin-bottom: 1rem; font-size: 0.85rem; color: var(--text-secondary); transition: color var(--transition); }
+    .back-link:hover { color: var(--text); }
+
+    .detail-card { background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.5rem; }
+    .detail-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
     .detail-table { width: 100%; }
-    .detail-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.875rem; }
-    .detail-table td:first-child { color: var(--text-secondary); font-weight: 500; width: 140px; }
+    .detail-table td { padding: 0.625rem 0; border-bottom: 1px solid var(--border-light); font-size: 0.875rem; vertical-align: top; }
+    .detail-table td:first-child { color: var(--text-secondary); font-weight: 500; width: 150px; padding-right: 1rem; }
     .detail-table tr:last-child td { border-bottom: none; }
-    .detail-actions { display: flex; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+    .detail-actions { display: flex; gap: 0.5rem; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border); }
 
-    .inline-form { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; padding: 0.75rem; background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); align-items: flex-end; }
-    .inline-form input, .inline-form select { padding: 0.45rem 0.6rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); }
-    .list-item { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid var(--border); }
+    .inline-form { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; padding: 1rem; background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); align-items: flex-end; }
+    .inline-form input, .inline-form select { height: 40px; padding: 0 0.75rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); font-size: 0.875rem; outline: none; }
+    .inline-form input:focus, .inline-form select:focus { border-color: var(--accent); }
+    .list-item { display: flex; justify-content: space-between; align-items: center; padding: 0.7rem 0; border-bottom: 1px solid var(--border-light); gap: 0.5rem; }
     .list-item:last-child { border-bottom: none; }
+    .list-item-title { font-weight: 500; font-size: 0.875rem; }
 
-    .icon-btn { background: none; border: none; cursor: pointer; padding: 0.4rem; border-radius: var(--radius-sm); color: var(--text-secondary); display: inline-flex; align-items: center; justify-content: center; transition: .15s; }
-    .icon-btn:hover { background: var(--bg); color: var(--text); }
-    .icon-btn-logout:hover { background: var(--danger); color: #fff; }
-    .sidebar-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; border-bottom: 1px solid var(--border); }
-    .sidebar-brand { font-weight: 700; font-size: 0.9rem; color: var(--text); }
-    .sidebar-close { background: none; border: none; cursor: pointer; font-size: 1.25rem; color: var(--text-muted); padding: 0.15rem 0.4rem; border-radius: var(--radius-sm); }
-    .sidebar-close:hover { background: var(--bg); color: var(--text); }
+    .icon-wrap { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
-    .toast { position: fixed; bottom: 5rem; left: 50%; transform: translateX(-50%); padding: 0.6rem 1.25rem; border-radius: var(--radius); font-size: 0.85rem; font-weight: 500; z-index: 999; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .toast-container { position: fixed; bottom: calc(var(--bottom-nav-h) + 1rem); left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem; pointer-events: none; max-width: 90vw; }
+    @media (min-width: 768px) { .toast-container { bottom: 1.5rem; } }
+    .toast { pointer-events: auto; display: flex; align-items: center; gap: 0.625rem; padding: 0.75rem 1rem; border-radius: var(--radius); font-size: 0.85rem; font-weight: 500; box-shadow: var(--shadow-md); min-width: 280px; max-width: 480px; animation: toast-in .2s ease-out; }
     .toast-success { background: var(--success); color: #fff; }
     .toast-error { background: var(--danger); color: #fff; }
-    .toast-enter-active, .toast-leave-active { transition: .3s; }
-    .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateX(-50%) translateY(10px); }
-    @media (min-width: 768px) { .toast { bottom: 2rem; } }
+    .toast-info { background: var(--accent); color: #fff; }
+    @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .toast-leaving { animation: toast-out .2s ease-in forwards; }
+    @keyframes toast-out { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(8px); } }
   </style>
 </head>
 <body>
   <div id="app"></div>
 
   <script>
-    const { createApp, ref, reactive, computed, onMounted, watch } = Vue;
+    const { createApp, ref, reactive, computed, onMounted, watch, nextTick } = Vue;
 
-    // ---- Config (ganti GAS_WEB_APP_URL dengan URL hasil deploy GAS) ----
     const API_URL = 'https://script.google.com/macros/s/AKfycbzbj_tFrj3V-E8OzglTFW1YP8YbXUQk6lZ0ehnvuvKmjdTvnkC7pH9Aulsc9qIWAwzJ/exec';
 
-    // ---- Global store ----
     const store = reactive({ token: null, user: null });
 
-    // ---- API helper ----
     function api(action, payload) {
       var body = { action: action, token: store.token };
       if (payload) Object.assign(body, payload);
@@ -198,17 +244,64 @@
       });
     }
 
-    // ---- Components ----
+    const icons = {
+      dashboard: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>',
+      file: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+      tag: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2z"/><circle cx="7" cy="7" r="2"/></svg>',
+      users: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+      key: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4a5 5 0 1 1-3.12 8.9l-5.7 5.7a1.5 1.5 0 0 1-2.12-2.12l1.44-1.44"/><path d="M9.88 12.12l3.54-3.54"/><path d="M10.5 18l2.5 2.5"/><path d="M14.5 14.5L17 17"/></svg>',
+      menu: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>',
+      moon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
+      sun: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>',
+      logout: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
+      plus: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+      search: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+      arrowLeft: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>',
+      close: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+      external: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>',
+      trash: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+      edit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
+      eye: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+      fileIcon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>',
+      upload: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>',
+      alertCircle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+      check: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+    };
+
+    var appIcon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>';
+
+    var toasts = ref([]);
+    function toast(msg, type) {
+      type = type || 'info';
+      var id = Date.now() + Math.random();
+      toasts.value.push({ id: id, msg: msg, type: type });
+      setTimeout(function() { toasts.value = toasts.value.filter(function(t) { return t.id !== id; }); }, 3500);
+    }
 
     const StatusBadge = {
       template: '<span class="badge" :class="\'badge-\' + status.toLowerCase()">{{ status }}</span>',
       props: ['status']
     };
 
+    const Icon = {
+      props: ['name', 'size'],
+      template: '<span class="icon-wrap" v-html="iconHtml" :style="sizeStyle"></span>',
+      setup: function(props) {
+        var iconHtml = computed(function() { return icons[props.name] || ''; });
+        var sizeStyle = computed(function() {
+          if (!props.size) return '';
+          var s = parseInt(props.size) + 'px';
+          return 'width:' + s + ';height:' + s + ';';
+        });
+        return { iconHtml: iconHtml, sizeStyle: sizeStyle };
+      }
+    };
+
     const Login = {
       template: `
         <div class="login-page">
           <div class="login-card">
+            <div class="login-logo" v-html="appIcon"></div>
             <div class="login-header">
               <h1>SIDORI</h1>
               <p>Sistem Inventarisasi Dokumen Perencanaan Irigasi</p>
@@ -216,14 +309,15 @@
             <form @submit.prevent="doLogin">
               <div class="field">
                 <label for="email">Email</label>
-                <input id="email" v-model="email" type="text" required autocomplete="username">
+                <input id="email" v-model="email" type="text" required autocomplete="username" placeholder="Masukkan email">
               </div>
               <div class="field">
                 <label for="password">Password</label>
-                <input id="password" v-model="password" type="password" required autocomplete="current-password">
+                <input id="password" v-model="password" type="password" required autocomplete="current-password" placeholder="Masukkan password">
               </div>
-              <p v-if="error" class="field-error">{{ error }}</p>
+              <p v-if="error" class="field-error"><span v-html="icons.alertCircle"></span>{{ error }}</p>
               <button type="submit" class="btn btn-primary btn-full" :disabled="submitting">
+                <span v-if="submitting" class="spinner" style="width:18px;height:18px;border-width:2px"></span>
                 {{ submitting ? 'Memuat...' : 'Masuk' }}
               </button>
             </form>
@@ -244,11 +338,11 @@
               store.token = res.token;
               store.user = res.user;
             } else {
-              error.value = res.error;
+              error.value = res.error || 'Email atau password salah';
             }
           });
         }
-        return { email, password, error, submitting, doLogin };
+        return { email, password, error, submitting, doLogin, appIcon, icons };
       }
     };
 
@@ -256,8 +350,6 @@
       template: '<component :is="page" />',
       setup() {
         const current = ref(location.hash.replace('#', '') || '/dashboard');
-        const routes = {};
-
         const page = computed(function() {
           var hash = current.value;
           if (routes[hash]) return routes[hash];
@@ -266,33 +358,28 @@
             var re = new RegExp('^' + pattern + '$');
             if (re.test(hash)) return routes[key];
           }
-          return { template: '<div class="page"><h2 style="margin-top:2rem">404</h2><p>Halaman tidak ditemukan</p></div>' };
+          return { template: '<div class="page"><div class="empty"><div class="empty-icon" v-html="icons.fileIcon"></div><div class="empty-text" style="font-size:1.5rem;font-weight:700">404</div><div class="empty-hint">Halaman tidak ditemukan</div></div></div>', setup: function() { return { icons: icons }; } };
         });
-
-        window.addEventListener('hashchange', function() {
-          current.value = location.hash.replace('#', '') || '/dashboard';
-        });
-
-        return { page, routes };
+        window.addEventListener('hashchange', function() { current.value = location.hash.replace('#', '') || '/dashboard'; });
+        return { page: page };
       }
     };
+    var routes = {};
 
     const AppLayout = {
       template: `
         <div class="app-layout">
           <header class="navbar">
-            <button class="icon-btn nav-toggle" @click="sidebarOpen = !sidebarOpen">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            <button class="btn-icon nav-toggle" @click="sidebarOpen = !sidebarOpen" aria-label="Toggle menu" v-html="icons.menu">
             </button>
             <h1 class="nav-title">SIDORI</h1>
             <div class="nav-right">
-              <button class="icon-btn" @click="toggleTheme" :title="isDark ? 'Mode Terang' : 'Mode Gelap'">
-                <svg v-if="!isDark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-                <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+              <button class="btn-icon" @click="toggleTheme" :title="isDark ? 'Mode Terang' : 'Mode Gelap'" :aria-label="isDark ? 'Mode Terang' : 'Mode Gelap'">
+                <span v-if="!isDark" v-html="icons.moon"></span>
+                <span v-else v-html="icons.sun"></span>
               </button>
               <span class="user-info">{{ user.nama }}</span>
-              <button class="icon-btn icon-btn-logout" @click="$emit('logout')" title="Keluar">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              <button class="btn-icon" @click="$emit('logout')" title="Keluar" aria-label="Keluar" v-html="icons.logout">
               </button>
             </div>
           </header>
@@ -300,17 +387,20 @@
           <aside class="sidebar" :class="{ open: sidebarOpen }">
             <div class="sidebar-header">
               <span class="sidebar-brand">SIDORI</span>
-              <button class="sidebar-close" @click="sidebarOpen = false" title="Tutup">✕</button>
+              <button class="btn-icon" @click="sidebarOpen = false" title="Tutup" aria-label="Tutup sidebar" v-html="icons.close" style="width:36px;height:36px">
+              </button>
             </div>
-            <nav class="sidebar-nav">
-              <a v-for="item in menu" :key="item.path"
-                 :href="'#' + item.path"
-                 :class="{ active: currentPath === item.path }"
-                 @click="onNavClick">
-                <span class="sidebar-icon">{{ item.icon }}</span>
-                <span>{{ item.label }}</span>
-              </a>
-            </nav>
+            <div class="sidebar-scroll">
+              <div class="sidebar-nav">
+                <a v-for="item in sidebarItems" :key="item.path"
+                   :href="'#' + item.path"
+                   :class="{ active: currentPath === item.path }"
+                   @click="onNavClick">
+                  <span class="sidebar-icon" v-html="item.icon"></span>
+                  <span>{{ item.label }}</span>
+                </a>
+              </div>
+            </div>
           </aside>
 
           <main class="main" :style="{ marginLeft: mainLeft + 'px' }">
@@ -318,13 +408,20 @@
           </main>
 
           <nav class="bottom-nav">
-            <a v-for="item in bottomMenu" :key="item.path"
+            <a v-for="item in bottomItems" :key="item.path"
                :href="'#' + item.path"
                :class="{ active: currentPath === item.path }">
-              <span class="nav-icon">{{ item.icon }}</span>
+              <span class="nav-icon" v-html="item.icon"></span>
               <span class="nav-label">{{ item.label }}</span>
             </a>
           </nav>
+
+          <div class="toast-container">
+            <div v-for="t in toasts" :key="t.id" :class="'toast toast-' + t.type">
+              <span v-html="t.type === 'error' ? icons.alertCircle : icons.check"></span>
+              {{ t.msg }}
+            </div>
+          </div>
         </div>
       `,
       props: ['user'],
@@ -339,7 +436,7 @@
         dq.addEventListener('change', function(e) { isDesktop.value = e.matches; });
 
         const mainLeft = computed(function() {
-          return isDesktop.value && sidebarOpen.value ? 240 : 0;
+          return isDesktop.value && sidebarOpen.value ? 256 : 0;
         });
 
         watch(currentPath, function(p) { location.hash = '#' + p; });
@@ -356,54 +453,59 @@
           if (!isDesktop.value) sidebarOpen.value = false;
         }
 
-        var allMenu = [
-          { path: '/dashboard', icon: '📊', label: 'Dashboard', role: null },
-          { path: '/dokumen', icon: '📁', label: 'Dokumen', role: null },
-          { path: '/kategori', icon: '🏷', label: 'Kategori', role: 'Admin' },
-          { path: '/users', icon: '👥', label: 'Pengguna', role: 'Admin' },
-          { path: '/ubah-password', icon: '🔑', label: 'Ganti Password', role: null },
+        var allItems = [
+          { path: '/dashboard', icon: icons.dashboard, label: 'Dashboard', role: null },
+          { path: '/dokumen', icon: icons.file, label: 'Dokumen', role: null },
+          { path: '/kategori', icon: icons.tag, label: 'Kategori', role: 'Admin' },
+          { path: '/users', icon: icons.users, label: 'Pengguna', role: 'Admin' },
+          { path: '/ubah-password', icon: icons.key, label: 'Ganti Password', role: null },
         ];
 
-        var menu = allMenu.filter(function(m) { return !m.role || props.user.role === m.role; });
-        var bottomMenu = allMenu.filter(function(m) {
-          if (m.path === '/kategori' || m.path === '/users') return false;
-          return true;
+        var sidebarItems = allItems.filter(function(m) { return !m.role || props.user.role === m.role; });
+        var bottomItems = allItems.filter(function(m) {
+          return m.path !== '/kategori' && m.path !== '/users';
         });
 
-        return { sidebarOpen, currentPath, isDark, menu, bottomMenu, toggleTheme, mainLeft, onNavClick };
+        return { sidebarOpen, currentPath, isDark, sidebarItems, bottomItems, mainLeft, toggleTheme, onNavClick, icons, toasts };
       }
     };
 
-    // ---- Pages ----
     const Dashboard = {
       template: `
         <div class="page">
           <h2 class="page-title">Dashboard</h2>
           <div class="stats-row">
             <div class="stat-card" v-for="s in stats" :key="s.label">
+              <div :class="'stat-icon ' + s.cssClass" v-html="s.icon"></div>
               <div class="stat-num">{{ s.count }}</div>
               <div class="stat-label">{{ s.label }}</div>
             </div>
           </div>
           <div class="card">
-            <h3 class="card-title">Dokumen Terbaru</h3>
-            <div v-if="!recent.length" class="empty">Belum ada dokumen</div>
-            <div v-for="doc in recent" :key="doc.id" class="doc-row">
-              <div class="doc-info">
-                <strong>{{ doc.nama }}</strong>
-                <span class="text-muted">{{ doc.tahunAnggaran }} · {{ doc.status }}</span>
+            <div class="card-header">
+              <h3 class="card-title" style="margin-bottom:0"><span v-html="icons.file"></span>Dokumen Terbaru</h3>
+            </div>
+            <div v-if="!recent.length" class="empty">
+              <div class="empty-icon" v-html="icons.file" style="opacity:0.3"></div>
+              <div class="empty-text">Belum ada dokumen</div>
+              <div class="empty-hint">Dokumen akan muncul setelah ditambahkan</div>
+            </div>
+            <div v-for="doc in recent" :key="doc.id" class="doc-row" style="display:flex;align-items:center;justify-content:space-between;padding:0.7rem 0;border-bottom:1px solid var(--border-light)">
+              <div style="display:flex;flex-direction:column;gap:0.2rem">
+                <strong style="font-size:0.875rem">{{ doc.nama }}</strong>
+                <span style="color:var(--text-secondary);font-size:0.8rem">{{ doc.tahunAnggaran }} · <StatusBadge :status="doc.status" /></span>
               </div>
-              <a :href="'#/dokumen/' + doc.id" class="btn btn-ghost btn-sm">Lihat</a>
+              <a :href="'#/dokumen/' + doc.id" class="btn btn-ghost btn-sm"><span v-html="icons.eye"></span>Lihat</a>
             </div>
           </div>
         </div>
       `,
       setup() {
         const stats = ref([
-          { label: 'Total Dokumen', count: 0 },
-          { label: 'Draft', count: 0 },
-          { label: 'Review', count: 0 },
-          { label: 'Selesai', count: 0 },
+          { label: 'Total Dokumen', count: 0, cssClass: 'total', icon: icons.fileIcon },
+          { label: 'Draft', count: 0, cssClass: 'draft', icon: icons.file },
+          { label: 'Review', count: 0, cssClass: 'review', icon: icons.eye },
+          { label: 'Selesai', count: 0, cssClass: 'selesai', icon: icons.check },
         ]);
         const recent = ref([]);
 
@@ -418,7 +520,7 @@
           });
         });
 
-        return { stats, recent };
+        return { stats, recent, icons };
       }
     };
 
@@ -427,10 +529,13 @@
         <div class="page">
           <div class="page-header">
             <h2 class="page-title">Daftar Dokumen</h2>
-            <a href="#/dokumen/tambah" v-if="canAdd" class="btn btn-primary btn-sm">+ Baru</a>
+            <a href="#/dokumen/tambah" v-if="canAdd" class="btn btn-primary btn-sm"><span v-html="icons.plus"></span>Baru</a>
           </div>
           <div class="filter-bar">
-            <input v-model="filter.search" placeholder="Cari dokumen..." class="filter-input" @input="load">
+            <div class="filter-input-wrapper">
+              <span class="filter-icon" v-html="icons.search"></span>
+              <input v-model="filter.search" placeholder="Cari dokumen..." class="filter-input" @input="load">
+            </div>
             <select v-model="filter.status" class="filter-select" @change="load">
               <option value="">Semua Status</option>
               <option value="Draft">Draft</option>
@@ -450,11 +555,11 @@
             <table class="table">
               <thead>
                 <tr>
-                  <th @click="sort('nama')">Nama {{ sortIcon('nama') }}</th>
-                  <th @click="sort('kategoriId')">Kategori {{ sortIcon('kategoriId') }}</th>
-                  <th class="hide-mobile" @click="sort('noDokumen')">No. Dok {{ sortIcon('noDokumen') }}</th>
-                  <th class="hide-mobile" @click="sort('tahunAnggaran')">TA {{ sortIcon('tahunAnggaran') }}</th>
-                  <th @click="sort('status')">Status {{ sortIcon('status') }}</th>
+                  <th @click="sort('nama')">Nama <SortIcon :dir="sdir('nama')" /></th>
+                  <th @click="sort('kategoriId')">Kategori <SortIcon :dir="sdir('kategoriId')" /></th>
+                  <th class="hide-mobile" @click="sort('noDokumen')">No. Dok <SortIcon :dir="sdir('noDokumen')" /></th>
+                  <th class="hide-mobile" @click="sort('tahunAnggaran')">TA <SortIcon :dir="sdir('tahunAnggaran')" /></th>
+                  <th @click="sort('status')">Status <SortIcon :dir="sdir('status')" /></th>
                   <th>Aksi</th>
                 </tr>
               </thead>
@@ -462,19 +567,19 @@
                 <tr v-for="doc in sortedDocs" :key="doc.id">
                   <td><a :href="'#/dokumen/' + doc.id" class="doc-link">{{ doc.nama }}</a></td>
                   <td>{{ kategoriName(doc.kategoriId) }}</td>
-                  <td class="hide-mobile">{{ doc.noDokumen }}</td>
+                  <td class="hide-mobile">{{ doc.noDokumen || '-' }}</td>
                   <td class="hide-mobile">{{ doc.tahunAnggaran }}</td>
                   <td><StatusBadge :status="doc.status" /></td>
-                  <td><a :href="'#/dokumen/' + doc.id" class="btn btn-ghost btn-sm">Lihat</a></td>
+                  <td><a :href="'#/dokumen/' + doc.id" class="btn btn-ghost btn-xs"><span v-html="icons.eye"></span></a></td>
                 </tr>
-                <tr v-if="!docs.length"><td colspan="6" class="empty">Tidak ada dokumen</td></tr>
+                <tr v-if="!docs.length"><td colspan="6"><div class="empty"><div class="empty-icon" v-html="icons.file" style="opacity:0.3"></div><div class="empty-text">Tidak ada dokumen</div><div class="empty-hint">Gunakan filter lain atau tambah dokumen baru</div></div></td></tr>
               </tbody>
             </table>
           </div>
           <div class="card-list">
             <div v-for="doc in sortedDocs" :key="doc.id" class="doc-card">
               <div class="doc-card-header">
-                <a :href="'#/dokumen/' + doc.id" class="doc-link">{{ doc.nama }}</a>
+                <a :href="'#/dokumen/' + doc.id" class="doc-link" style="font-size:0.875rem;font-weight:600">{{ doc.nama }}</a>
                 <StatusBadge :status="doc.status" />
               </div>
               <div class="doc-card-meta">
@@ -482,7 +587,11 @@
                 <span>{{ doc.tahunAnggaran }}</span>
               </div>
             </div>
-            <div v-if="!docs.length" class="empty">Tidak ada dokumen</div>
+            <div v-if="!docs.length" class="empty">
+              <div class="empty-icon" v-html="icons.file" style="opacity:0.3"></div>
+              <div class="empty-text">Tidak ada dokumen</div>
+              <div class="empty-hint">Gunakan filter lain atau tambah dokumen baru</div>
+            </div>
           </div>
         </div>
       `,
@@ -512,9 +621,9 @@
           else { sortField.value = field; sortDir.value = 1; }
         }
 
-        function sortIcon(field) {
-          if (sortField.value !== field) return '\u2195';
-          return sortDir.value === 1 ? '\u2191' : '\u2193';
+        function sdir(field) {
+          if (sortField.value !== field) return '';
+          return sortDir.value === 1 ? 'asc' : 'desc';
         }
 
         function kategoriName(id) {
@@ -537,21 +646,27 @@
           for (var i = 0; i < 10; i++) tahunList.value.push((y - i).toString());
         });
 
-        return { docs, kategories, filter, sortedDocs, tahunList, canAdd, sort, sortIcon, kategoriName, load };
+        return { docs, kategories, filter, sortedDocs, tahunList, canAdd, sort, sdir, kategoriName, load, icons };
       }
+    };
+
+    const SortIcon = {
+      props: ['dir'],
+      template: '<span style="font-size:0.65rem;margin-left:2px;opacity:0.5">{{ dir === "asc" ? "\\u2191" : dir === "desc" ? "\\u2193" : "\\u2195" }}</span>'
     };
 
     const DokumenForm = {
       template: `
         <div class="page">
+          <a href="#/dokumen" class="back-link"><span v-html="icons.arrowLeft"></span>Kembali</a>
           <h2 class="page-title">{{ isEdit ? 'Edit Dokumen' : 'Tambah Dokumen' }}</h2>
-          <form @submit.prevent="submit" class="form-card">
+          <form @submit.prevent="submit" class="form-card card">
             <div class="field">
-              <label for="nama">Nama Dokumen *</label>
-              <input id="nama" v-model="form.nama" required>
+              <label for="nama">Nama Dokumen <span style="color:var(--danger)">*</span></label>
+              <input id="nama" v-model="form.nama" required placeholder="Masukkan nama dokumen">
             </div>
             <div class="field">
-              <label for="kategori">Kategori *</label>
+              <label for="kategori">Kategori <span style="color:var(--danger)">*</span></label>
               <select id="kategori" v-model="form.kategoriId" required>
                 <option value="">Pilih Kategori</option>
                 <option v-for="k in kategories" :key="k.id" :value="k.id">{{ k.nama }}</option>
@@ -560,7 +675,7 @@
             <div class="field-row">
               <div class="field">
                 <label for="noDokumen">No. Dokumen</label>
-                <input id="noDokumen" v-model="form.noDokumen">
+                <input id="noDokumen" v-model="form.noDokumen" placeholder="Contoh: 001/SPK/VI/2025">
               </div>
               <div class="field">
                 <label for="tanggal">Tanggal</label>
@@ -569,7 +684,7 @@
             </div>
             <div class="field-row">
               <div class="field">
-                <label for="tahunAnggaran">Tahun Anggaran *</label>
+                <label for="tahunAnggaran">Tahun Anggaran <span style="color:var(--danger)">*</span></label>
                 <select id="tahunAnggaran" v-model="form.tahunAnggaran" required>
                   <option value="">Pilih TA</option>
                   <option v-for="t in tahunList" :key="t" :value="t">{{ t }}</option>
@@ -587,16 +702,21 @@
             <div class="field">
               <label>File</label>
               <div v-if="form.fileUrl" class="file-current">
-                <a :href="form.fileUrl" target="_blank">Lihat file saat ini</a>
-                <button type="button" class="btn btn-ghost btn-sm" @click="form.fileUrl = ''">Hapus</button>
+                <span v-html="icons.fileIcon" style="flex-shrink:0;opacity:0.5"></span>
+                <a :href="form.fileUrl" target="_blank" style="flex:1">Lihat file saat ini</a>
+                <button type="button" class="btn btn-ghost btn-xs" @click="form.fileUrl = ''"><span v-html="icons.trash"></span></button>
               </div>
-              <input type="file" ref="fileInput" @change="onFileChange" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png">
-              <p v-if="uploading" class="text-muted">Mengunggah...</p>
+              <div style="display:flex;gap:0.5rem;align-items:center">
+                <input type="file" ref="fileInput" @change="onFileChange" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png" style="flex:1;height:44px;padding:0.5rem 0;border:none;background:none;font-size:0.825rem">
+                <span v-if="uploading" class="spinner" style="width:20px;height:20px;border-width:2px;flex-shrink:0"></span>
+              </div>
+              <p class="field-hint">Format: PDF, DOC, XLS, JPG, PNG. Maksimal 10MB.</p>
             </div>
-            <p v-if="error" class="field-error">{{ error }}</p>
+            <p v-if="error" class="field-error"><span v-html="icons.alertCircle"></span>{{ error }}</p>
             <div class="form-actions">
               <a href="#/dokumen" class="btn btn-ghost">Batal</a>
               <button type="submit" class="btn btn-primary" :disabled="submitting">
+                <span v-if="submitting" class="spinner" style="width:18px;height:18px;border-width:2px"></span>
                 {{ submitting ? 'Menyimpan...' : 'Simpan' }}
               </button>
             </div>
@@ -639,7 +759,9 @@
         function onFileChange(e) {
           var file = e.target.files[0];
           if (!file) return;
+          if (file.size > 10 * 1024 * 1024) { error.value = 'File maksimal 10MB'; return; }
           uploading.value = true;
+          error.value = '';
           var reader = new FileReader();
           reader.onload = function() {
             var base64 = reader.result.split(',')[1];
@@ -661,31 +783,31 @@
           if (isEdit.value) {
             api('dokumen_update', { id: editId.value, data: data }).then(function(res) {
               submitting.value = false;
-              if (res.success) { location.hash = '#/dokumen/' + editId.value; }
+              if (res.success) { location.hash = '#/dokumen/' + editId.value; toast('Dokumen berhasil diperbarui', 'success'); }
               else { error.value = res.error; }
             });
           } else {
             api('dokumen_create', { data: data }).then(function(res) {
               submitting.value = false;
-              if (res.success) { location.hash = '#/dokumen/' + res.id; }
+              if (res.success) { location.hash = '#/dokumen/' + res.id; toast('Dokumen berhasil ditambahkan', 'success'); }
               else { error.value = res.error; }
             });
           }
         }
 
-        return { kategories, form, isEdit, error, submitting, uploading, fileInput, tahunList, onFileChange, submit };
+        return { kategories, form, isEdit, error, submitting, uploading, fileInput, tahunList, onFileChange, submit, icons };
       }
     };
 
     const DokumenDetail = {
       template: `
         <div class="page">
-          <a href="#/dokumen" class="back-link">\u2190 Kembali</a>
-          <div v-if="loading" class="empty">Memuat...</div>
-          <div v-else-if="doc.error" class="empty">{{ doc.error }}</div>
+          <a href="#/dokumen" class="back-link"><span v-html="icons.arrowLeft"></span>Kembali</a>
+          <div v-if="loading" class="empty"><div class="spinner"></div><div class="empty-text" style="margin-top:0.75rem">Memuat...</div></div>
+          <div v-else-if="doc.error" class="empty"><div class="empty-text">{{ doc.error }}</div></div>
           <div v-else class="detail-card">
             <div class="detail-header">
-              <h2 class="page-title">{{ doc.nama }}</h2>
+              <h2 class="page-title" style="margin-bottom:0">{{ doc.nama }}</h2>
               <StatusBadge :status="doc.status" />
             </div>
             <table class="detail-table">
@@ -695,14 +817,15 @@
               <tr><td>Tahun Anggaran</td><td>{{ doc.tahunAnggaran }}</td></tr>
               <tr><td>Diunggah oleh</td><td>{{ doc.uploaderEmail }}</td></tr>
               <tr><td>Dibuat</td><td>{{ formatDate(doc.createdAt) }}</td></tr>
+              <tr><td>Diperbarui</td><td>{{ formatDate(doc.updatedAt) || '-' }}</td></tr>
               <tr><td>File</td><td>
-                <a v-if="doc.fileUrl" :href="doc.fileUrl" target="_blank" class="btn btn-primary btn-sm">Buka di Drive</a>
-                <span v-else class="text-muted">Tidak ada file</span>
+                <a v-if="doc.fileUrl" :href="doc.fileUrl" target="_blank" class="btn btn-primary btn-sm"><span v-html="icons.external"></span>Buka di Drive</a>
+                <span v-else class="text-muted" style="font-size:0.875rem">Tidak ada file</span>
               </td></tr>
             </table>
             <div class="detail-actions" v-if="canEdit">
-              <a :href="'#/dokumen/' + doc.id + '/edit'" class="btn btn-primary btn-sm">Edit</a>
-              <button class="btn btn-danger btn-sm" @click="confirmDelete">Hapus</button>
+              <a :href="'#/dokumen/' + doc.id + '/edit'" class="btn btn-primary btn-sm"><span v-html="icons.edit"></span>Edit</a>
+              <button class="btn btn-danger btn-sm" @click="confirmDelete"><span v-html="icons.trash"></span>Hapus</button>
             </div>
           </div>
         </div>
@@ -721,14 +844,14 @@
 
         function formatDate(iso) {
           if (!iso) return '-';
-          return new Date(iso).toLocaleDateString('id-ID');
+          return new Date(iso).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
         }
 
         function confirmDelete() {
           if (!confirm('Yakin ingin menghapus dokumen ini?')) return;
           var id = location.hash.match(/\/dokumen\/([^/]+)/)[1];
           api('dokumen_delete', { id: id }).then(function(res) {
-            if (res.success) location.hash = '#/dokumen';
+            if (res.success) { location.hash = '#/dokumen'; toast('Dokumen berhasil dihapus', 'success'); }
           });
         }
 
@@ -738,7 +861,7 @@
           api('dokumen_get', { id: id }).then(function(d) { doc.value = d; loading.value = false; });
         });
 
-        return { doc, loading, kategories, canEdit, kategoriName, formatDate, confirmDelete };
+        return { doc, loading, kategories, canEdit, kategoriName, formatDate, confirmDelete, icons };
       }
     };
 
@@ -747,19 +870,23 @@
         <div class="page">
           <div class="page-header">
             <h2 class="page-title">Kelola Kategori</h2>
-            <button class="btn btn-primary btn-sm" @click="showForm = true">+ Baru</button>
+            <button class="btn btn-primary btn-sm" @click="showForm = !showForm"><span v-html="icons.plus"></span>Baru</button>
           </div>
           <form v-if="showForm" class="inline-form" @submit.prevent="addKategori">
             <input v-model="newNama" placeholder="Nama kategori" required>
-            <button type="submit" class="btn btn-primary btn-sm">Simpan</button>
+            <button type="submit" class="btn btn-primary btn-sm"><span v-html="icons.plus"></span>Simpan</button>
             <button type="button" class="btn btn-ghost btn-sm" @click="showForm = false">Batal</button>
           </form>
           <div class="card">
             <div v-for="k in list" :key="k.id" class="list-item">
-              <span>{{ k.nama }}</span>
-              <button class="btn btn-danger btn-sm" @click="hapus(k.id)">Hapus</button>
+              <span class="list-item-title">{{ k.nama }}</span>
+              <button class="btn btn-danger btn-xs" @click="hapus(k.id)"><span v-html="icons.trash"></span>Hapus</button>
             </div>
-            <div v-if="!list.length" class="empty">Belum ada kategori</div>
+            <div v-if="!list.length" class="empty">
+              <div class="empty-icon" v-html="icons.tag" style="opacity:0.3"></div>
+              <div class="empty-text">Belum ada kategori</div>
+              <div class="empty-hint">Tambahkan kategori untuk mengelompokkan dokumen</div>
+            </div>
           </div>
         </div>
       `,
@@ -768,23 +895,19 @@
         const showForm = ref(false);
         const newNama = ref('');
 
-        function load() {
-          api('kategori_list').then(function(k) { if (!k.error) list.value = k; });
-        }
-
+        function load() { api('kategori_list').then(function(k) { if (!k.error) list.value = k; }); }
         function addKategori() {
           api('kategori_create', { nama: newNama.value }).then(function() {
-            newNama.value = ''; showForm.value = false; load();
+            newNama.value = ''; showForm.value = false; load(); toast('Kategori berhasil ditambahkan', 'success');
           });
         }
-
         function hapus(id) {
           if (!confirm('Hapus kategori ini?')) return;
-          api('kategori_delete', { id: id }).then(function() { load(); });
+          api('kategori_delete', { id: id }).then(function() { load(); toast('Kategori berhasil dihapus', 'success'); });
         }
 
         onMounted(load);
-        return { list, showForm, newNama, addKategori, hapus };
+        return { list, showForm, newNama, addKategori, hapus, icons };
       }
     };
 
@@ -793,7 +916,7 @@
         <div class="page">
           <div class="page-header">
             <h2 class="page-title">Kelola Pengguna</h2>
-            <button class="btn btn-primary btn-sm" @click="showForm = true">+ Tambah</button>
+            <button class="btn btn-primary btn-sm" @click="showForm = !showForm"><span v-html="icons.plus"></span>Tambah</button>
           </div>
           <form v-if="showForm" class="inline-form" @submit.prevent="addUser">
             <input v-model="form.email" placeholder="Email" required type="email">
@@ -805,20 +928,20 @@
               <option value="Viewer">Viewer</option>
               <option value="Kabid">Kepala Bidang</option>
             </select>
-            <input v-model="form.password" placeholder="Password" required type="password">
-            <button type="submit" class="btn btn-primary btn-sm">Simpan</button>
+            <input v-model="form.password" placeholder="Password" required type="password" style="min-width:130px">
+            <button type="submit" class="btn btn-primary btn-sm"><span v-html="icons.plus"></span>Simpan</button>
             <button type="button" class="btn btn-ghost btn-sm" @click="showForm = false">Batal</button>
           </form>
-          <div class="card">
+          <div class="table-wrap" style="display:block">
             <table class="table">
               <thead><tr><th>Email</th><th>Nama</th><th>Role</th><th>Aksi</th></tr></thead>
               <tbody>
                 <tr v-for="u in users" :key="u.email">
                   <td>{{ u.email }}</td><td>{{ u.nama }}</td>
                   <td><StatusBadge :status="u.role" /></td>
-                  <td><button class="btn btn-danger btn-sm" @click="hapus(u.email)">Hapus</button></td>
+                  <td><button class="btn btn-danger btn-xs" @click="hapus(u.email)" :disabled="u.email === 'admin'"><span v-html="icons.trash"></span></button></td>
                 </tr>
-                <tr v-if="!users.length"><td colspan="4" class="empty">Belum ada pengguna</td></tr>
+                <tr v-if="!users.length"><td colspan="4"><div class="empty"><div class="empty-icon" v-html="icons.users" style="opacity:0.3"></div><div class="empty-text">Belum ada pengguna</div></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -829,24 +952,20 @@
         const showForm = ref(false);
         const form = reactive({ email: '', nama: '', role: '', password: '' });
 
-        function load() {
-          api('users_list').then(function(u) { if (!u.error) users.value = u; });
-        }
-
+        function load() { api('users_list').then(function(u) { if (!u.error) users.value = u; }); }
         function addUser() {
           api('users_create', { data: { email: form.email, nama: form.nama, role: form.role, password: form.password } }).then(function() {
             form.email = ''; form.nama = ''; form.role = ''; form.password = '';
-            showForm.value = false; load();
+            showForm.value = false; load(); toast('Pengguna berhasil ditambahkan', 'success');
           });
         }
-
         function hapus(email) {
           if (!confirm('Hapus pengguna ' + email + '?')) return;
-          api('users_delete', { email: email }).then(function() { load(); });
+          api('users_delete', { email: email }).then(function() { load(); toast('Pengguna berhasil dihapus', 'success'); });
         }
 
         onMounted(load);
-        return { users, showForm, form, addUser, hapus };
+        return { users, showForm, form, addUser, hapus, icons };
       }
     };
 
@@ -854,23 +973,24 @@
       template: `
         <div class="page">
           <h2 class="page-title">Ganti Password</h2>
-          <div class="card form-card" style="max-width:400px">
+          <div class="card form-card" style="max-width:420px">
             <form @submit.prevent="submit">
               <div class="field">
                 <label for="old">Password Lama</label>
-                <input id="old" v-model="oldPassword" type="password" required>
+                <input id="old" v-model="oldPassword" type="password" required placeholder="Masukkan password lama">
               </div>
               <div class="field">
                 <label for="new">Password Baru</label>
-                <input id="new" v-model="newPassword" type="password" required minlength="6">
+                <input id="new" v-model="newPassword" type="password" required minlength="6" placeholder="Minimal 6 karakter">
               </div>
               <div class="field">
                 <label for="confirm">Konfirmasi Password Baru</label>
-                <input id="confirm" v-model="confirmPassword" type="password" required minlength="6">
+                <input id="confirm" v-model="confirmPassword" type="password" required minlength="6" placeholder="Ulangi password baru">
               </div>
-              <p v-if="error" class="field-error">{{ error }}</p>
-              <p v-if="success" style="color:var(--success);font-size:0.85rem;margin-bottom:0.75rem">Password berhasil diubah</p>
+              <p v-if="error" class="field-error"><span v-html="icons.alertCircle"></span>{{ error }}</p>
+              <p v-if="success" class="field-success"><span v-html="icons.check"></span>Password berhasil diubah</p>
               <button type="submit" class="btn btn-primary btn-full" :disabled="submitting">
+                <span v-if="submitting" class="spinner" style="width:18px;height:18px;border-width:2px"></span>
                 {{ submitting ? 'Menyimpan...' : 'Simpan' }}
               </button>
             </form>
@@ -898,63 +1018,41 @@
           });
         }
 
-        return { oldPassword, newPassword, confirmPassword, error, success, submitting, submit };
+        return { oldPassword, newPassword, confirmPassword, error, success, submitting, submit, icons };
       }
     };
 
-    // ---- Routes ----
-    RouterView.setup = function() {
-      var state = Vue.reactive({ current: location.hash.replace('#', '') || '/dashboard' });
-
-      var routes = {
-        '/dashboard': Dashboard,
-        '/dokumen': DokumenList,
-        '/dokumen/tambah': DokumenForm,
-        '/dokumen/:id': DokumenDetail,
-        '/dokumen/:id/edit': DokumenForm,
-        '/kategori': KategoriList,
-        '/users': UserList,
-        '/ubah-password': UbahPassword,
-      };
-
-      var page = Vue.computed(function() {
-        var hash = state.current;
-        if (routes[hash]) return routes[hash];
-        for (var key in routes) {
-          var pattern = key.replace(/:id/g, '([^/]+)');
-          var re = new RegExp('^' + pattern + '$');
-          if (re.test(hash)) return routes[key];
-        }
-        return { template: '<div class="page"><h2 style="margin-top:2rem">404</h2><p>Halaman tidak ditemukan</p></div>' };
-      });
-
-      window.addEventListener('hashchange', function() {
-        state.current = location.hash.replace('#', '') || '/dashboard';
-      });
-
-      return { page: page };
+    routes = {
+      '/dashboard': Dashboard,
+      '/dokumen': DokumenList,
+      '/dokumen/tambah': DokumenForm,
+      '/dokumen/:id': DokumenDetail,
+      '/dokumen/:id/edit': DokumenForm,
+      '/kategori': KategoriList,
+      '/users': UserList,
+      '/ubah-password': UbahPassword,
     };
 
-    // ---- App ----
     const App = {
-      components: { Login, AppLayout, RouterView },
-      template: '<div v-if="loading" class="loading-screen"><div class="spinner"></div></div><Login v-else-if="!store.user" /><AppLayout v-else :user="store.user" @logout="handleLogout"><RouterView /></AppLayout>',
+      components: { Login, AppLayout, RouterView, Icon, StatusBadge, SortIcon },
+      template: '<div v-if="loading" class="loading-screen"><div class="spinner"></div><span class="loader-text">Memuat...</span></div><Login v-else-if="!store.user" /><AppLayout v-else :user="store.user" @logout="handleLogout"><RouterView /></AppLayout>',
       setup() {
         const loading = ref(false);
-
         function handleLogout() {
           api('logout').then(function() {
             store.token = null;
             store.user = null;
+            toast('Berhasil keluar', 'info');
           });
         }
-
         return { loading, handleLogout, store };
       }
     };
 
     const app = createApp(App);
     app.component('StatusBadge', StatusBadge);
+    app.component('Icon', Icon);
+    app.component('SortIcon', SortIcon);
     app.mount('#app');
   </script>
 </body>
