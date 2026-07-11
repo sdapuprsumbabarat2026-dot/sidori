@@ -380,7 +380,7 @@
       template: `
         <div class="app-layout">
           <header class="navbar">
-            <button class="icon-btn" @click="sidebarOpen = !sidebarOpen" aria-label="Toggle menu" v-html="I.menu"></button>
+            <button class="icon-btn" @click="toggleSidebar" aria-label="Toggle menu" v-html="I.menu"></button>
             <h1 class="nav-title">SIDORI</h1>
             <div class="nav-right">
               <button class="icon-btn" @click="toggleTheme" :title="isDark ? 'Mode Terang' : 'Mode Gelap'" :aria-label="isDark ? 'Mode Terang' : 'Mode Gelap'">
@@ -446,6 +446,7 @@
         window.addEventListener('hashchange', function() { currentPath.value = location.hash.replace('#', '') || '/dashboard'; });
 
         function toggleTheme() { isDark.value = !isDark.value; document.documentElement.setAttribute('data-theme', isDark.value ? 'dark' : 'light'); }
+        function toggleSidebar() { sidebarOpen.value = !sidebarOpen.value; }
         function navClick() { if (!isDesktop.value) sidebarOpen.value = false; }
 
         var all = [
@@ -458,7 +459,7 @@
         var menuItems = all.filter(function(m) { return !m.role || props.user.role === m.role; });
         var bottomItems = all.filter(function(m) { return m.path !== '/kategori' && m.path !== '/users'; });
 
-        return { sidebarOpen, currentPath, isDark, menuItems, bottomItems, ml, toggleTheme, navClick, I, toasts };
+        return { sidebarOpen, currentPath, isDark, menuItems, bottomItems, ml, toggleTheme, toggleSidebar, navClick, I, toasts };
       }
     };
 
