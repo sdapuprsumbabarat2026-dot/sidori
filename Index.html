@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F8FAFC; --bg-card: #FFFFFF; --bg-sidebar: #FFFFFF;
+      --text: #0F172A; --text-secondary: #475569; --text-muted: #94A3B8;
+      --border: #E4E5E7; --primary: #1E293B; --primary-hover: #0F172A;
+      --accent: #2563EB; --accent-hover: #1D4ED8;
+      --danger: #DC2626; --success: #16A34A; --warning: #D97706;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08);
+      --radius: 8px; --radius-sm: 6px;
+      --font: 'Inter', system-ui, sans-serif;
+      --sidebar-w: 240px; --navbar-h: 56px;
+    }
+    [data-theme="dark"] {
+      --bg: #0F172A; --bg-card: #1E293B; --bg-sidebar: #1E293B;
+      --text: #F1F5F9; --text-secondary: #94A3B8; --text-muted: #64748B;
+      --border: #334155; --primary: #F1F5F9; --primary-hover: #E2E8F0;
+      --accent: #60A5FA; --accent-hover: #93C5FD;
+      --shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); }
+    a { color: var(--accent); text-decoration: none; }
+    input, select, textarea, button { font-family: inherit; font-size: 0.875rem; }
+
+    .loading-screen { display: flex; justify-content: center; align-items: center; height: 100vh; }
+    .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; background: var(--bg); }
+    .login-card { width: 100%; max-width: 380px; background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 2rem; }
+    .login-header { text-align: center; margin-bottom: 1.5rem; }
+    .login-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+    .login-header p { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem; }
+
+    .field { margin-bottom: 1rem; }
+    .field label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text); margin-bottom: 0.3rem; }
+    .field input, .field select { width: 100%; padding: 0.6rem 0.75rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); outline: none; }
+    .field input:focus, .field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+    .field-error { color: var(--danger); font-size: 0.8rem; margin-bottom: 0.75rem; }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.6rem 1.25rem; border-radius: var(--radius-sm); border: none; cursor: pointer; font-weight: 600; font-size: 0.875rem; transition: .15s; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-full { width: 100%; }
+    .btn-ghost { background: transparent; color: var(--text-secondary); }
+    .btn-ghost:hover { background: var(--bg); }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+
+    .login-footer { margin-top: 1rem; text-align: center; }
+    .theme-toggle { display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.8rem; color: var(--text-secondary); }
+
+    /* App Layout */
+    .app-layout { display: flex; flex-direction: column; min-height: 100vh; }
+    .navbar { position: fixed; top: 0; left: 0; right: 0; height: var(--navbar-h); background: var(--bg-card); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 1rem; z-index: 100; gap: 0.75rem; }
+    .nav-toggle { background: none; border: none; font-size: 1.25rem; cursor: pointer; padding: 0.25rem; color: var(--text); }
+    .nav-title { font-size: 1rem; font-weight: 700; flex: 1; }
+    .nav-right { display: flex; align-items: center; gap: 0.5rem; }
+    .user-info { font-size: 0.8rem; color: var(--text-secondary); }
+
+    .sidebar { position: fixed; top: var(--navbar-h); left: 0; bottom: 0; width: var(--sidebar-w); background: var(--bg-sidebar); border-right: 1px solid var(--border); transform: translateX(-100%); transition: .2s; z-index: 90; overflow-y: auto; }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-nav { padding: 0.75rem; display: flex; flex-direction: column; gap: 0.25rem; }
+    .sidebar-nav a { display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0.75rem; border-radius: var(--radius-sm); color: var(--text-secondary); font-size: 0.875rem; font-weight: 500; transition: .15s; }
+    .sidebar-nav a:hover { background: var(--bg); color: var(--text); }
+    .sidebar-nav a.active { background: var(--accent); color: #fff; }
+    .sidebar-icon { font-size: 1rem; }
+
+    .main { flex: 1; padding: calc(var(--navbar-h) + 1rem) 1rem 5rem; }
+
+    .bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-card); border-top: 1px solid var(--border); padding: 0.25rem 0; z-index: 100; }
+    .bottom-nav a { display: flex; flex-direction: column; align-items: center; padding: 0.35rem 0; color: var(--text-muted); font-size: 0.7rem; flex: 1; text-decoration: none; }
+    .bottom-nav a.active { color: var(--accent); }
+    .nav-icon { font-size: 1.1rem; }
+    .nav-label { margin-top: 0.1rem; }
+
+    @media (min-width: 768px) {
+      .main { padding-bottom: 1rem; }
+      .bottom-nav { display: none !important; }
+    }
+    @media (max-width: 767px) {
+      .bottom-nav { display: flex; }
+    }
+
+    /* Shared page styles */
+    .page { max-width: 960px; margin: 0 auto; }
+    .page-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+
+    .filter-bar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .filter-input, .filter-select { padding: 0.45rem 0.6rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-card); color: var(--text); font-size: 0.8rem; }
+    .filter-input { flex: 1; min-width: 180px; }
+
+    .card { background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.25rem; margin-bottom: 1rem; }
+    .card-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; }
+    .empty { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.875rem; }
+
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; }
+    .stat-card { background: var(--bg-card); border-radius: var(--radius); padding: 1rem; box-shadow: var(--shadow); text-align: center; }
+    .stat-num { font-size: 1.75rem; font-weight: 700; color: var(--accent); }
+    .stat-label { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
+
+    .doc-row { display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px solid var(--border); }
+    .doc-row:last-child { border-bottom: none; }
+    .doc-info { display: flex; flex-direction: column; gap: 0.15rem; }
+    .text-muted { color: var(--text-secondary); font-size: 0.8rem; }
+
+    .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+    .badge-draft { background: #F1F5F9; color: #475569; }
+    .badge-review { background: #FEF3C7; color: #92400E; }
+    .badge-selesai { background: #DCFCE7; color: #166534; }
+    [data-theme="dark"] .badge-draft { background: #334155; color: #CBD5E1; }
+    [data-theme="dark"] .badge-review { background: #78350F; color: #FDE68A; }
+    [data-theme="dark"] .badge-selesai { background: #14532D; color: #86EFAC; }
+
+    .table-wrap { overflow-x: auto; display: none; }
+    .table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .table th { text-align: left; padding: 0.6rem 0.75rem; border-bottom: 2px solid var(--border); color: var(--text-secondary); font-weight: 600; cursor: pointer; white-space: nowrap; user-select: none; }
+    .table td { padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--border); }
+    .table tbody tr:hover { background: var(--bg); }
+    .doc-link { color: var(--accent); font-weight: 500; }
+
+    .card-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .doc-card { background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 0.75rem 1rem; }
+    .doc-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; }
+    .doc-card-meta { display: flex; gap: 1rem; font-size: 0.75rem; color: var(--text-secondary); }
+    .hide-mobile { display: none; }
+    @media (min-width: 768px) { .hide-mobile { display: table-cell; } }
+
+    @media (min-width: 768px) { .table-wrap { display: block; } .card-list { display: none; } }
+
+    .form-card { max-width: 600px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .file-current { margin-bottom: 0.5rem; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem; }
+    .form-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+
+    .back-link { display: inline-block; margin-bottom: 1rem; font-size: 0.85rem; color: var(--text-secondary); }
+    .detail-card { background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.25rem; }
+    .detail-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+    .detail-table { width: 100%; }
+    .detail-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.875rem; }
+    .detail-table td:first-child { color: var(--text-secondary); font-weight: 500; width: 140px; }
+    .detail-table tr:last-child td { border-bottom: none; }
+    .detail-actions { display: flex; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+
+    .inline-form { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; padding: 0.75rem; background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); align-items: flex-end; }
+    .inline-form input, .inline-form select { padding: 0.45rem 0.6rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); }
+    .list-item { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid var(--border); }
+    .list-item:last-child { border-bottom: none; }
+
+    .icon-btn { background: none; border: none; cursor: pointer; padding: 0.4rem; border-radius: var(--radius-sm); color: var(--text-secondary); display: inline-flex; align-items: center; justify-content: center; transition: .15s; }
+    .icon-btn:hover { background: var(--bg); color: var(--text); }
+    .icon-btn-logout:hover { background: var(--danger); color: #fff; }
+    .sidebar-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; border-bottom: 1px solid var(--border); }
+    .sidebar-brand { font-weight: 700; font-size: 0.9rem; color: var(--text); }
+    .sidebar-close { background: none; border: none; cursor: pointer; font-size: 1.25rem; color: var(--text-muted); padding: 0.15rem 0.4rem; border-radius: var(--radius-sm); }
+    .sidebar-close:hover { background: var(--bg); color: var(--text); }
+
+    .toast { position: fixed; bottom: 5rem; left: 50%; transform: translateX(-50%); padding: 0.6rem 1.25rem; border-radius: var(--radius); font-size: 0.85rem; font-weight: 500; z-index: 999; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .toast-success { background: var(--success); color: #fff; }
+    .toast-error { background: var(--danger); color: #fff; }
+    .toast-enter-active, .toast-leave-active { transition: .3s; }
+    .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateX(-50%) translateY(10px); }
+    @media (min-width: 768px) { .toast { bottom: 2rem; } }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    const { createApp, ref, reactive, computed, onMounted, watch } = Vue;
+
+    // ---- Config (ganti GAS_WEB_APP_URL dengan URL hasil deploy GAS) ----
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzbj_tFrj3V-E8OzglTFW1YP8YbXUQk6lZ0ehnvuvKmjdTvnkC7pH9Aulsc9qIWAwzJ/exec';
+
+    // ---- Global store ----
+    const store = reactive({ token: null, user: null });
+
+    // ---- API helper ----
+    function api(action, payload) {
+      var body = { action: action, token: store.token };
+      if (payload) Object.assign(body, payload);
+      return fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(body)
+      }).then(function(r) { return r.json(); }).catch(function() {
+        return { error: 'Gagal terhubung ke server' };
+      });
+    }
+
+    // ---- Components ----
+
+    const StatusBadge = {
+      template: '<span class="badge" :class="\'badge-\' + status.toLowerCase()">{{ status }}</span>',
+      props: ['status']
+    };
+
+    const Login = {
+      template: `
+        <div class="login-page">
+          <div class="login-card">
+            <div class="login-header">
+              <h1>SIDORI</h1>
+              <p>Sistem Inventarisasi Dokumen Perencanaan Irigasi</p>
+            </div>
+            <form @submit.prevent="doLogin">
+              <div class="field">
+                <label for="email">Email</label>
+                <input id="email" v-model="email" type="text" required autocomplete="username">
+              </div>
+              <div class="field">
+                <label for="password">Password</label>
+                <input id="password" v-model="password" type="password" required autocomplete="current-password">
+              </div>
+              <p v-if="error" class="field-error">{{ error }}</p>
+              <button type="submit" class="btn btn-primary btn-full" :disabled="submitting">
+                {{ submitting ? 'Memuat...' : 'Masuk' }}
+              </button>
+            </form>
+          </div>
+        </div>
+      `,
+      setup() {
+        const email = ref('');
+        const password = ref('');
+        const error = ref('');
+        const submitting = ref(false);
+        function doLogin() {
+          error.value = '';
+          submitting.value = true;
+          api('login', { email: email.value, password: password.value }).then(function(res) {
+            submitting.value = false;
+            if (res.success) {
+              store.token = res.token;
+              store.user = res.user;
+            } else {
+              error.value = res.error;
+            }
+          });
+        }
+        return { email, password, error, submitting, doLogin };
+      }
+    };
+
+    const RouterView = {
+      template: '<component :is="page" />',
+      setup() {
+        const current = ref(location.hash.replace('#', '') || '/dashboard');
+        const routes = {};
+
+        const page = computed(function() {
+          var hash = current.value;
+          if (routes[hash]) return routes[hash];
+          for (var key in routes) {
+            var pattern = key.replace(/:id/g, '([^/]+)');
+            var re = new RegExp('^' + pattern + '$');
+            if (re.test(hash)) return routes[key];
+          }
+          return { template: '<div class="page"><h2 style="margin-top:2rem">404</h2><p>Halaman tidak ditemukan</p></div>' };
+        });
+
+        window.addEventListener('hashchange', function() {
+          current.value = location.hash.replace('#', '') || '/dashboard';
+        });
+
+        return { page, routes };
+      }
+    };
+
+    const AppLayout = {
+      template: `
+        <div class="app-layout">
+          <header class="navbar">
+            <button class="icon-btn nav-toggle" @click="sidebarOpen = !sidebarOpen">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <h1 class="nav-title">SIDORI</h1>
+            <div class="nav-right">
+              <button class="icon-btn" @click="toggleTheme" :title="isDark ? 'Mode Terang' : 'Mode Gelap'">
+                <svg v-if="!isDark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+              </button>
+              <span class="user-info">{{ user.nama }}</span>
+              <button class="icon-btn icon-btn-logout" @click="$emit('logout')" title="Keluar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              </button>
+            </div>
+          </header>
+
+          <aside class="sidebar" :class="{ open: sidebarOpen }">
+            <div class="sidebar-header">
+              <span class="sidebar-brand">SIDORI</span>
+              <button class="sidebar-close" @click="sidebarOpen = false" title="Tutup">✕</button>
+            </div>
+            <nav class="sidebar-nav">
+              <a v-for="item in menu" :key="item.path"
+                 :href="'#' + item.path"
+                 :class="{ active: currentPath === item.path }"
+                 @click="onNavClick">
+                <span class="sidebar-icon">{{ item.icon }}</span>
+                <span>{{ item.label }}</span>
+              </a>
+            </nav>
+          </aside>
+
+          <main class="main" :style="{ marginLeft: mainLeft + 'px' }">
+            <slot></slot>
+          </main>
+
+          <nav class="bottom-nav">
+            <a v-for="item in bottomMenu" :key="item.path"
+               :href="'#' + item.path"
+               :class="{ active: currentPath === item.path }">
+              <span class="nav-icon">{{ item.icon }}</span>
+              <span class="nav-label">{{ item.label }}</span>
+            </a>
+          </nav>
+        </div>
+      `,
+      props: ['user'],
+      emits: ['logout'],
+      setup(props) {
+        var dq = window.matchMedia('(min-width: 768px)');
+        const isDesktop = ref(dq.matches);
+        const sidebarOpen = ref(dq.matches);
+        const currentPath = ref(location.hash.replace('#', '') || '/dashboard');
+        const isDark = ref(document.documentElement.getAttribute('data-theme') === 'dark');
+
+        dq.addEventListener('change', function(e) { isDesktop.value = e.matches; });
+
+        const mainLeft = computed(function() {
+          return isDesktop.value && sidebarOpen.value ? 240 : 0;
+        });
+
+        watch(currentPath, function(p) { location.hash = '#' + p; });
+        window.addEventListener('hashchange', function() {
+          currentPath.value = location.hash.replace('#', '') || '/dashboard';
+        });
+
+        function toggleTheme() {
+          isDark.value = !isDark.value;
+          document.documentElement.setAttribute('data-theme', isDark.value ? 'dark' : 'light');
+        }
+
+        function onNavClick() {
+          if (!isDesktop.value) sidebarOpen.value = false;
+        }
+
+        var allMenu = [
+          { path: '/dashboard', icon: '📊', label: 'Dashboard', role: null },
+          { path: '/dokumen', icon: '📁', label: 'Dokumen', role: null },
+          { path: '/kategori', icon: '🏷', label: 'Kategori', role: 'Admin' },
+          { path: '/users', icon: '👥', label: 'Pengguna', role: 'Admin' },
+          { path: '/ubah-password', icon: '🔑', label: 'Ganti Password', role: null },
+        ];
+
+        var menu = allMenu.filter(function(m) { return !m.role || props.user.role === m.role; });
+        var bottomMenu = allMenu.filter(function(m) {
+          if (m.path === '/kategori' || m.path === '/users') return false;
+          return true;
+        });
+
+        return { sidebarOpen, currentPath, isDark, menu, bottomMenu, toggleTheme, mainLeft, onNavClick };
+      }
+    };
+
+    // ---- Pages ----
+    const Dashboard = {
+      template: `
+        <div class="page">
+          <h2 class="page-title">Dashboard</h2>
+          <div class="stats-row">
+            <div class="stat-card" v-for="s in stats" :key="s.label">
+              <div class="stat-num">{{ s.count }}</div>
+              <div class="stat-label">{{ s.label }}</div>
+            </div>
+          </div>
+          <div class="card">
+            <h3 class="card-title">Dokumen Terbaru</h3>
+            <div v-if="!recent.length" class="empty">Belum ada dokumen</div>
+            <div v-for="doc in recent" :key="doc.id" class="doc-row">
+              <div class="doc-info">
+                <strong>{{ doc.nama }}</strong>
+                <span class="text-muted">{{ doc.tahunAnggaran }} · {{ doc.status }}</span>
+              </div>
+              <a :href="'#/dokumen/' + doc.id" class="btn btn-ghost btn-sm">Lihat</a>
+            </div>
+          </div>
+        </div>
+      `,
+      setup() {
+        const stats = ref([
+          { label: 'Total Dokumen', count: 0 },
+          { label: 'Draft', count: 0 },
+          { label: 'Review', count: 0 },
+          { label: 'Selesai', count: 0 },
+        ]);
+        const recent = ref([]);
+
+        onMounted(function() {
+          api('dokumen_list', { filter: {} }).then(function(docs) {
+            if (docs.error) return;
+            stats.value[0].count = docs.length;
+            stats.value[1].count = docs.filter(function(d) { return d.status === 'Draft'; }).length;
+            stats.value[2].count = docs.filter(function(d) { return d.status === 'Review'; }).length;
+            stats.value[3].count = docs.filter(function(d) { return d.status === 'Selesai'; }).length;
+            recent.value = docs.slice(-5).reverse();
+          });
+        });
+
+        return { stats, recent };
+      }
+    };
+
+    const DokumenList = {
+      template: `
+        <div class="page">
+          <div class="page-header">
+            <h2 class="page-title">Daftar Dokumen</h2>
+            <a href="#/dokumen/tambah" v-if="canAdd" class="btn btn-primary btn-sm">+ Baru</a>
+          </div>
+          <div class="filter-bar">
+            <input v-model="filter.search" placeholder="Cari dokumen..." class="filter-input" @input="load">
+            <select v-model="filter.status" class="filter-select" @change="load">
+              <option value="">Semua Status</option>
+              <option value="Draft">Draft</option>
+              <option value="Review">Review</option>
+              <option value="Selesai">Selesai</option>
+            </select>
+            <select v-model="filter.kategoriId" class="filter-select" @change="load">
+              <option value="">Semua Kategori</option>
+              <option v-for="k in kategories" :key="k.id" :value="k.id">{{ k.nama }}</option>
+            </select>
+            <select v-model="filter.tahunAnggaran" class="filter-select" @change="load">
+              <option value="">Semua TA</option>
+              <option v-for="t in tahunList" :key="t" :value="t">{{ t }}</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th @click="sort('nama')">Nama {{ sortIcon('nama') }}</th>
+                  <th @click="sort('kategoriId')">Kategori {{ sortIcon('kategoriId') }}</th>
+                  <th class="hide-mobile" @click="sort('noDokumen')">No. Dok {{ sortIcon('noDokumen') }}</th>
+                  <th class="hide-mobile" @click="sort('tahunAnggaran')">TA {{ sortIcon('tahunAnggaran') }}</th>
+                  <th @click="sort('status')">Status {{ sortIcon('status') }}</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="doc in sortedDocs" :key="doc.id">
+                  <td><a :href="'#/dokumen/' + doc.id" class="doc-link">{{ doc.nama }}</a></td>
+                  <td>{{ kategoriName(doc.kategoriId) }}</td>
+                  <td class="hide-mobile">{{ doc.noDokumen }}</td>
+                  <td class="hide-mobile">{{ doc.tahunAnggaran }}</td>
+                  <td><StatusBadge :status="doc.status" /></td>
+                  <td><a :href="'#/dokumen/' + doc.id" class="btn btn-ghost btn-sm">Lihat</a></td>
+                </tr>
+                <tr v-if="!docs.length"><td colspan="6" class="empty">Tidak ada dokumen</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card-list">
+            <div v-for="doc in sortedDocs" :key="doc.id" class="doc-card">
+              <div class="doc-card-header">
+                <a :href="'#/dokumen/' + doc.id" class="doc-link">{{ doc.nama }}</a>
+                <StatusBadge :status="doc.status" />
+              </div>
+              <div class="doc-card-meta">
+                <span>{{ kategoriName(doc.kategoriId) }}</span>
+                <span>{{ doc.tahunAnggaran }}</span>
+              </div>
+            </div>
+            <div v-if="!docs.length" class="empty">Tidak ada dokumen</div>
+          </div>
+        </div>
+      `,
+      setup() {
+        const docs = ref([]);
+        const kategories = ref([]);
+        const filter = reactive({ search: '', status: '', kategoriId: '', tahunAnggaran: '' });
+        const sortField = ref('createdAt');
+        const sortDir = ref(-1);
+        const tahunList = ref([]);
+        const canAdd = computed(function() {
+          return store.user && (store.user.role === 'Admin' || store.user.role === 'Operator');
+        });
+
+        const sortedDocs = computed(function() {
+          var list = docs.value.slice();
+          list.sort(function(a, b) {
+            var va = a[sortField.value] || '';
+            var vb = b[sortField.value] || '';
+            return sortDir.value * String(va).localeCompare(String(vb));
+          });
+          return list;
+        });
+
+        function sort(field) {
+          if (sortField.value === field) { sortDir.value *= -1; }
+          else { sortField.value = field; sortDir.value = 1; }
+        }
+
+        function sortIcon(field) {
+          if (sortField.value !== field) return '\u2195';
+          return sortDir.value === 1 ? '\u2191' : '\u2193';
+        }
+
+        function kategoriName(id) {
+          var k = kategories.value.find(function(k) { return k.id === id; });
+          return k ? k.nama : '-';
+        }
+
+        function load() {
+          api('dokumen_list', { filter: filter }).then(function(d) {
+            if (!d.error) docs.value = d;
+          });
+        }
+
+        onMounted(function() {
+          api('kategori_list').then(function(k) {
+            if (!k.error) kategories.value = k;
+            load();
+          });
+          var y = new Date().getFullYear();
+          for (var i = 0; i < 10; i++) tahunList.value.push((y - i).toString());
+        });
+
+        return { docs, kategories, filter, sortedDocs, tahunList, canAdd, sort, sortIcon, kategoriName, load };
+      }
+    };
+
+    const DokumenForm = {
+      template: `
+        <div class="page">
+          <h2 class="page-title">{{ isEdit ? 'Edit Dokumen' : 'Tambah Dokumen' }}</h2>
+          <form @submit.prevent="submit" class="form-card">
+            <div class="field">
+              <label for="nama">Nama Dokumen *</label>
+              <input id="nama" v-model="form.nama" required>
+            </div>
+            <div class="field">
+              <label for="kategori">Kategori *</label>
+              <select id="kategori" v-model="form.kategoriId" required>
+                <option value="">Pilih Kategori</option>
+                <option v-for="k in kategories" :key="k.id" :value="k.id">{{ k.nama }}</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="noDokumen">No. Dokumen</label>
+                <input id="noDokumen" v-model="form.noDokumen">
+              </div>
+              <div class="field">
+                <label for="tanggal">Tanggal</label>
+                <input id="tanggal" v-model="form.tanggal" type="date">
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="tahunAnggaran">Tahun Anggaran *</label>
+                <select id="tahunAnggaran" v-model="form.tahunAnggaran" required>
+                  <option value="">Pilih TA</option>
+                  <option v-for="t in tahunList" :key="t" :value="t">{{ t }}</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="status">Status</label>
+                <select id="status" v-model="form.status">
+                  <option value="Draft">Draft</option>
+                  <option value="Review">Review</option>
+                  <option value="Selesai">Selesai</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label>File</label>
+              <div v-if="form.fileUrl" class="file-current">
+                <a :href="form.fileUrl" target="_blank">Lihat file saat ini</a>
+                <button type="button" class="btn btn-ghost btn-sm" @click="form.fileUrl = ''">Hapus</button>
+              </div>
+              <input type="file" ref="fileInput" @change="onFileChange" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png">
+              <p v-if="uploading" class="text-muted">Mengunggah...</p>
+            </div>
+            <p v-if="error" class="field-error">{{ error }}</p>
+            <div class="form-actions">
+              <a href="#/dokumen" class="btn btn-ghost">Batal</a>
+              <button type="submit" class="btn btn-primary" :disabled="submitting">
+                {{ submitting ? 'Menyimpan...' : 'Simpan' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      `,
+      setup() {
+        const kategories = ref([]);
+        const form = reactive({ nama: '', kategoriId: '', noDokumen: '', tanggal: '', tahunAnggaran: '', status: 'Draft', fileUrl: '' });
+        const isEdit = ref(false);
+        const editId = ref(null);
+        const error = ref('');
+        const submitting = ref(false);
+        const uploading = ref(false);
+        const fileInput = ref(null);
+        const tahunList = ref([]);
+
+        var y = new Date().getFullYear();
+        for (var i = 0; i < 10; i++) tahunList.value.push((y - i).toString());
+
+        onMounted(function() {
+          api('kategori_list').then(function(k) { if (!k.error) kategories.value = k; });
+          var match = location.hash.match(/\/dokumen\/(.+)\/edit/);
+          if (match) {
+            isEdit.value = true;
+            editId.value = match[1];
+            api('dokumen_get', { id: editId.value }).then(function(d) {
+              if (d.error) { error.value = d.error; return; }
+              form.nama = d.nama;
+              form.kategoriId = d.kategoriId;
+              form.noDokumen = d.noDokumen || '';
+              form.tanggal = d.tanggal || '';
+              form.tahunAnggaran = d.tahunAnggaran || '';
+              form.status = d.status || 'Draft';
+              form.fileUrl = d.fileUrl || '';
+            });
+          }
+        });
+
+        function onFileChange(e) {
+          var file = e.target.files[0];
+          if (!file) return;
+          uploading.value = true;
+          var reader = new FileReader();
+          reader.onload = function() {
+            var base64 = reader.result.split(',')[1];
+            api('upload', { filename: file.name, mimeType: file.type, base64: base64 }).then(function(res) {
+              uploading.value = false;
+              if (res.success) { form.fileUrl = res.fileUrl; }
+              else { error.value = res.error || 'Upload gagal'; }
+            });
+          };
+          reader.onerror = function() { uploading.value = false; error.value = 'Gagal membaca file'; };
+          reader.readAsDataURL(file);
+        }
+
+        function submit() {
+          error.value = '';
+          submitting.value = true;
+          var data = { nama: form.nama, kategoriId: form.kategoriId, noDokumen: form.noDokumen, tanggal: form.tanggal, tahunAnggaran: form.tahunAnggaran, status: form.status, fileUrl: form.fileUrl };
+
+          if (isEdit.value) {
+            api('dokumen_update', { id: editId.value, data: data }).then(function(res) {
+              submitting.value = false;
+              if (res.success) { location.hash = '#/dokumen/' + editId.value; }
+              else { error.value = res.error; }
+            });
+          } else {
+            api('dokumen_create', { data: data }).then(function(res) {
+              submitting.value = false;
+              if (res.success) { location.hash = '#/dokumen/' + res.id; }
+              else { error.value = res.error; }
+            });
+          }
+        }
+
+        return { kategories, form, isEdit, error, submitting, uploading, fileInput, tahunList, onFileChange, submit };
+      }
+    };
+
+    const DokumenDetail = {
+      template: `
+        <div class="page">
+          <a href="#/dokumen" class="back-link">\u2190 Kembali</a>
+          <div v-if="loading" class="empty">Memuat...</div>
+          <div v-else-if="doc.error" class="empty">{{ doc.error }}</div>
+          <div v-else class="detail-card">
+            <div class="detail-header">
+              <h2 class="page-title">{{ doc.nama }}</h2>
+              <StatusBadge :status="doc.status" />
+            </div>
+            <table class="detail-table">
+              <tr><td>Kategori</td><td>{{ kategoriName }}</td></tr>
+              <tr><td>No. Dokumen</td><td>{{ doc.noDokumen || '-' }}</td></tr>
+              <tr><td>Tanggal</td><td>{{ doc.tanggal || '-' }}</td></tr>
+              <tr><td>Tahun Anggaran</td><td>{{ doc.tahunAnggaran }}</td></tr>
+              <tr><td>Diunggah oleh</td><td>{{ doc.uploaderEmail }}</td></tr>
+              <tr><td>Dibuat</td><td>{{ formatDate(doc.createdAt) }}</td></tr>
+              <tr><td>File</td><td>
+                <a v-if="doc.fileUrl" :href="doc.fileUrl" target="_blank" class="btn btn-primary btn-sm">Buka di Drive</a>
+                <span v-else class="text-muted">Tidak ada file</span>
+              </td></tr>
+            </table>
+            <div class="detail-actions" v-if="canEdit">
+              <a :href="'#/dokumen/' + doc.id + '/edit'" class="btn btn-primary btn-sm">Edit</a>
+              <button class="btn btn-danger btn-sm" @click="confirmDelete">Hapus</button>
+            </div>
+          </div>
+        </div>
+      `,
+      setup() {
+        const doc = ref({});
+        const loading = ref(true);
+        const kategories = ref([]);
+        const canEdit = computed(function() {
+          return store.user && (store.user.role === 'Admin' || store.user.role === 'Operator');
+        });
+        const kategoriName = computed(function() {
+          var k = kategories.value.find(function(k) { return k.id === doc.value.kategoriId; });
+          return k ? k.nama : '-';
+        });
+
+        function formatDate(iso) {
+          if (!iso) return '-';
+          return new Date(iso).toLocaleDateString('id-ID');
+        }
+
+        function confirmDelete() {
+          if (!confirm('Yakin ingin menghapus dokumen ini?')) return;
+          var id = location.hash.match(/\/dokumen\/([^/]+)/)[1];
+          api('dokumen_delete', { id: id }).then(function(res) {
+            if (res.success) location.hash = '#/dokumen';
+          });
+        }
+
+        onMounted(function() {
+          var id = location.hash.match(/\/dokumen\/([^/]+)/)[1];
+          api('kategori_list').then(function(k) { if (!k.error) kategories.value = k; });
+          api('dokumen_get', { id: id }).then(function(d) { doc.value = d; loading.value = false; });
+        });
+
+        return { doc, loading, kategories, canEdit, kategoriName, formatDate, confirmDelete };
+      }
+    };
+
+    const KategoriList = {
+      template: `
+        <div class="page">
+          <div class="page-header">
+            <h2 class="page-title">Kelola Kategori</h2>
+            <button class="btn btn-primary btn-sm" @click="showForm = true">+ Baru</button>
+          </div>
+          <form v-if="showForm" class="inline-form" @submit.prevent="addKategori">
+            <input v-model="newNama" placeholder="Nama kategori" required>
+            <button type="submit" class="btn btn-primary btn-sm">Simpan</button>
+            <button type="button" class="btn btn-ghost btn-sm" @click="showForm = false">Batal</button>
+          </form>
+          <div class="card">
+            <div v-for="k in list" :key="k.id" class="list-item">
+              <span>{{ k.nama }}</span>
+              <button class="btn btn-danger btn-sm" @click="hapus(k.id)">Hapus</button>
+            </div>
+            <div v-if="!list.length" class="empty">Belum ada kategori</div>
+          </div>
+        </div>
+      `,
+      setup() {
+        const list = ref([]);
+        const showForm = ref(false);
+        const newNama = ref('');
+
+        function load() {
+          api('kategori_list').then(function(k) { if (!k.error) list.value = k; });
+        }
+
+        function addKategori() {
+          api('kategori_create', { nama: newNama.value }).then(function() {
+            newNama.value = ''; showForm.value = false; load();
+          });
+        }
+
+        function hapus(id) {
+          if (!confirm('Hapus kategori ini?')) return;
+          api('kategori_delete', { id: id }).then(function() { load(); });
+        }
+
+        onMounted(load);
+        return { list, showForm, newNama, addKategori, hapus };
+      }
+    };
+
+    const UserList = {
+      template: `
+        <div class="page">
+          <div class="page-header">
+            <h2 class="page-title">Kelola Pengguna</h2>
+            <button class="btn btn-primary btn-sm" @click="showForm = true">+ Tambah</button>
+          </div>
+          <form v-if="showForm" class="inline-form" @submit.prevent="addUser">
+            <input v-model="form.email" placeholder="Email" required type="email">
+            <input v-model="form.nama" placeholder="Nama" required>
+            <select v-model="form.role" required>
+              <option value="">Pilih Role</option>
+              <option value="Admin">Admin</option>
+              <option value="Operator">Operator</option>
+              <option value="Viewer">Viewer</option>
+              <option value="Kabid">Kepala Bidang</option>
+            </select>
+            <input v-model="form.password" placeholder="Password" required type="password">
+            <button type="submit" class="btn btn-primary btn-sm">Simpan</button>
+            <button type="button" class="btn btn-ghost btn-sm" @click="showForm = false">Batal</button>
+          </form>
+          <div class="card">
+            <table class="table">
+              <thead><tr><th>Email</th><th>Nama</th><th>Role</th><th>Aksi</th></tr></thead>
+              <tbody>
+                <tr v-for="u in users" :key="u.email">
+                  <td>{{ u.email }}</td><td>{{ u.nama }}</td>
+                  <td><StatusBadge :status="u.role" /></td>
+                  <td><button class="btn btn-danger btn-sm" @click="hapus(u.email)">Hapus</button></td>
+                </tr>
+                <tr v-if="!users.length"><td colspan="4" class="empty">Belum ada pengguna</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `,
+      setup() {
+        const users = ref([]);
+        const showForm = ref(false);
+        const form = reactive({ email: '', nama: '', role: '', password: '' });
+
+        function load() {
+          api('users_list').then(function(u) { if (!u.error) users.value = u; });
+        }
+
+        function addUser() {
+          api('users_create', { data: { email: form.email, nama: form.nama, role: form.role, password: form.password } }).then(function() {
+            form.email = ''; form.nama = ''; form.role = ''; form.password = '';
+            showForm.value = false; load();
+          });
+        }
+
+        function hapus(email) {
+          if (!confirm('Hapus pengguna ' + email + '?')) return;
+          api('users_delete', { email: email }).then(function() { load(); });
+        }
+
+        onMounted(load);
+        return { users, showForm, form, addUser, hapus };
+      }
+    };
+
+    const UbahPassword = {
+      template: `
+        <div class="page">
+          <h2 class="page-title">Ganti Password</h2>
+          <div class="card form-card" style="max-width:400px">
+            <form @submit.prevent="submit">
+              <div class="field">
+                <label for="old">Password Lama</label>
+                <input id="old" v-model="oldPassword" type="password" required>
+              </div>
+              <div class="field">
+                <label for="new">Password Baru</label>
+                <input id="new" v-model="newPassword" type="password" required minlength="6">
+              </div>
+              <div class="field">
+                <label for="confirm">Konfirmasi Password Baru</label>
+                <input id="confirm" v-model="confirmPassword" type="password" required minlength="6">
+              </div>
+              <p v-if="error" class="field-error">{{ error }}</p>
+              <p v-if="success" style="color:var(--success);font-size:0.85rem;margin-bottom:0.75rem">Password berhasil diubah</p>
+              <button type="submit" class="btn btn-primary btn-full" :disabled="submitting">
+                {{ submitting ? 'Menyimpan...' : 'Simpan' }}
+              </button>
+            </form>
+          </div>
+        </div>
+      `,
+      setup() {
+        const oldPassword = ref('');
+        const newPassword = ref('');
+        const confirmPassword = ref('');
+        const error = ref('');
+        const success = ref(false);
+        const submitting = ref(false);
+
+        function submit() {
+          error.value = '';
+          success.value = false;
+          if (newPassword.value !== confirmPassword.value) { error.value = 'Konfirmasi password tidak cocok'; return; }
+          if (newPassword.value.length < 6) { error.value = 'Password baru minimal 6 karakter'; return; }
+          submitting.value = true;
+          api('changePassword', { oldPassword: oldPassword.value, newPassword: newPassword.value }).then(function(res) {
+            submitting.value = false;
+            if (res.success) { success.value = true; oldPassword.value = ''; newPassword.value = ''; confirmPassword.value = ''; }
+            else { error.value = res.error; }
+          });
+        }
+
+        return { oldPassword, newPassword, confirmPassword, error, success, submitting, submit };
+      }
+    };
+
+    // ---- Routes ----
+    RouterView.setup = function() {
+      var state = Vue.reactive({ current: location.hash.replace('#', '') || '/dashboard' });
+
+      var routes = {
+        '/dashboard': Dashboard,
+        '/dokumen': DokumenList,
+        '/dokumen/tambah': DokumenForm,
+        '/dokumen/:id': DokumenDetail,
+        '/dokumen/:id/edit': DokumenForm,
+        '/kategori': KategoriList,
+        '/users': UserList,
+        '/ubah-password': UbahPassword,
+      };
+
+      var page = Vue.computed(function() {
+        var hash = state.current;
+        if (routes[hash]) return routes[hash];
+        for (var key in routes) {
+          var pattern = key.replace(/:id/g, '([^/]+)');
+          var re = new RegExp('^' + pattern + '$');
+          if (re.test(hash)) return routes[key];
+        }
+        return { template: '<div class="page"><h2 style="margin-top:2rem">404</h2><p>Halaman tidak ditemukan</p></div>' };
+      });
+
+      window.addEventListener('hashchange', function() {
+        state.current = location.hash.replace('#', '') || '/dashboard';
+      });
+
+      return { page: page };
+    };
+
+    // ---- App ----
+    const App = {
+      components: { Login, AppLayout, RouterView },
+      template: '<div v-if="loading" class="loading-screen"><div class="spinner"></div></div><Login v-else-if="!store.user" /><AppLayout v-else :user="store.user" @logout="handleLogout"><RouterView /></AppLayout>',
+      setup() {
+        const loading = ref(false);
+
+        function handleLogout() {
+          api('logout').then(function() {
+            store.token = null;
+            store.user = null;
+          });
+        }
+
+        return { loading, handleLogout, store };
+      }
+    };
+
+    const app = createApp(App);
+    app.component('StatusBadge', StatusBadge);
+    app.mount('#app');
+  </script>
+</body>
+</html>
