@@ -119,7 +119,7 @@
     .sidebar-nav a.active .nav-icon-box { background: var(--blue); color: #fff; }
     .nav-icon-box { width: 32px; height: 32px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--text-muted); transition: all var(--transition); background: transparent; }
 
-    .main { flex: 1; display: flex; flex-direction: column; padding: calc(var(--navbar-h) + 1.25rem) 1.5rem calc(var(--bottom-nav-h) + 1.5rem); transition: margin-left var(--transition); max-width: 1200px; margin: 0 auto; width: 100%; }
+    .main { flex: 1; display: flex; flex-direction: column; padding: calc(var(--navbar-h) + 1.25rem) 1.5rem calc(var(--bottom-nav-h) + 1.5rem); transition: margin-left var(--transition); width: 100%; max-width: 1400px; margin: 0 auto; }
     .page { flex: 1; }
 
     .bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; right: 0; height: var(--bottom-nav-h); background: rgba(255,255,255,0.90); backdrop-filter: blur(16px) saturate(180%); border-top: 1px solid var(--border); z-index: 100; padding-bottom: env(safe-area-inset-bottom, 0); }
@@ -152,12 +152,15 @@
     .filter-select { min-width: 130px; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.75rem center; appearance: none; padding-right: 2.25rem; }
 
     .card { background: var(--bg-card); border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 1.5rem 1.75rem; margin-bottom: 1rem; border: 1px solid var(--border-light); }
+    .card-fill { flex: 1; display: flex; flex-direction: column; }
+    .card-fill .card-header { flex-shrink: 0; }
+    .card-fill .empty { flex: 1; min-height: auto; }
     .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem; }
     .card-title { font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
 
-    .empty { text-align: center; padding: 4rem 1rem; color: var(--text-muted); }
+    .empty { text-align: center; padding: 4rem 1rem; color: var(--text-muted); flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px; }
     .empty-icon { margin-bottom: 1rem; opacity: 0.2; display: inline-flex; }
-    .empty-icon svg { width: 48px; height: 48px; }
+    .empty-icon svg { width: 52px; height: 52px; }
     .empty-text { font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem; }
     .empty-hint { font-size: 0.85rem; color: var(--text-secondary); }
 
@@ -451,7 +454,7 @@
 
     const Dashboard = {
       template: `
-        <div class="page">
+        <div class="page" style="display:flex;flex-direction:column">
           <h2 class="page-title">Dashboard</h2>
           <div class="stats-row">
             <div class="stat-card" v-for="s in stats" :key="s.label">
@@ -460,7 +463,7 @@
               <div class="stat-label">{{ s.label }}</div>
             </div>
           </div>
-          <div class="card">
+          <div class="card card-fill">
             <div class="card-header">
               <h3 class="card-title"><span v-html="I.file"></span>Dokumen Terbaru</h3>
             </div>
