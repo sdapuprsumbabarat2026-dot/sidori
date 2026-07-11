@@ -4,7 +4,7 @@
   <base target="_top">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -139,8 +139,8 @@
     .bottom-nav a .b-icon { display: flex; align-items: center; }
 
     @media (min-width: 768px) {
-      .sidebar { transform: translateX(0); box-shadow: none; }
-      .sidebar.open { box-shadow: none; }
+      .sidebar { box-shadow: none; }
+      .sidebar.open { transform: translateX(0); box-shadow: none; }
       .main { padding-bottom: 1.5rem; }
       .bottom-nav { display: none !important; }
     }
@@ -445,9 +445,9 @@
         watch(currentPath, function(p) { location.hash = '#' + p; });
         window.addEventListener('hashchange', function() { currentPath.value = location.hash.replace('#', '') || '/dashboard'; });
 
-        function toggleTheme() { isDark.value = !isDark.value; document.documentElement.setAttribute('data-theme', isDark.value ? 'dark' : 'light'); console.log('theme toggled', isDark.value); }
-        function toggleSidebar() { console.log('toggleSidebar called BEFORE:', sidebarOpen.value); sidebarOpen.value = !sidebarOpen.value; console.log('toggleSidebar called AFTER:', sidebarOpen.value); }
-        function navClick() { console.log('navClick called'); if (!isDesktop.value) sidebarOpen.value = false; }
+        function toggleTheme() { isDark.value = !isDark.value; document.documentElement.setAttribute('data-theme', isDark.value ? 'dark' : 'light'); }
+        function toggleSidebar() { sidebarOpen.value = !sidebarOpen.value; }
+        function navClick() { if (!isDesktop.value) sidebarOpen.value = false; }
 
         var all = [
           { path: '/dashboard', icon: I.dashboard, label: 'Dashboard', role: null },
@@ -459,7 +459,7 @@
         var menuItems = all.filter(function(m) { return !m.role || props.user.role === m.role; });
         var bottomItems = all.filter(function(m) { return m.path !== '/kategori' && m.path !== '/users'; });
 
-        return { sidebarOpen, currentPath, isDark, menuItems, bottomItems, ml, toggleTheme, toggleSidebar, navClick, I, toasts };
+        return { sidebarOpen, isDesktop, currentPath, isDark, menuItems, bottomItems, ml, toggleTheme, toggleSidebar, navClick, I, toasts };
       }
     };
 
