@@ -541,15 +541,15 @@
       setup() {
         const docs = ref([]); const kats = ref([]); const tahun = ref([]);
         const f = reactive({ search: '', status: '', kategoriId: '', tahunAnggaran: '' });
-        const sf = ref('createdAt'); const sd = ref(-1);
+        const sf = ref('createdAt'); const sdir = ref(-1);
         const canAdd = computed(function() { return store.user && (store.user.role === 'Admin' || store.user.role === 'Operator'); });
         const sorted = computed(function() {
           var l = docs.value.slice();
-          l.sort(function(a,b) { var va = a[sf.value]||'', vb = b[sf.value]||''; return sd.value * String(va).localeCompare(String(vb)); });
+          l.sort(function(a,b) { var va = a[sf.value]||'', vb = b[sf.value]||''; return sdir.value * String(va).localeCompare(String(vb)); });
           return l;
         });
-        function sort(field) { if (sf.value === field) sd.value *= -1; else { sf.value = field; sd.value = 1; } }
-        function sd(field) { if (sf.value !== field) return ''; return sd.value === 1 ? 'asc' : 'desc'; }
+        function sort(field) { if (sf.value === field) sdir.value *= -1; else { sf.value = field; sdir.value = 1; } }
+        function sd(field) { if (sf.value !== field) return ''; return sdir.value === 1 ? 'asc' : 'desc'; }
         function katName(id) { var k = kats.value.find(function(k) { return k.id === id; }); return k ? k.nama : '-'; }
         function load() { api('dokumen_list', { filter: f }).then(function(d) { if (!d.error) docs.value = d; }); }
         onMounted(function() {
