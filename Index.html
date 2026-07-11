@@ -435,7 +435,8 @@
       setup(props) {
         var dq = window.matchMedia('(min-width: 768px)');
         const isDesktop = ref(dq.matches);
-        const sidebarOpen = ref(dq.matches);
+        var savedSidebar = localStorage.getItem('sidebarOpen');
+        const sidebarOpen = ref(savedSidebar !== null ? savedSidebar === 'true' : dq.matches);
         const currentPath = ref(location.hash.replace('#', '') || '/dashboard');
         const isDark = ref(document.documentElement.getAttribute('data-theme') === 'dark');
 
@@ -444,6 +445,7 @@
 
         watch(currentPath, function(p) { location.hash = '#' + p; });
         window.addEventListener('hashchange', function() { currentPath.value = location.hash.replace('#', '') || '/dashboard'; });
+        watch(sidebarOpen, function(v) { localStorage.setItem('sidebarOpen', v); });
 
         function toggleTheme() { isDark.value = !isDark.value; document.documentElement.setAttribute('data-theme', isDark.value ? 'dark' : 'light'); }
         function toggleSidebar() { sidebarOpen.value = !sidebarOpen.value; }
