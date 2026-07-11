@@ -106,9 +106,10 @@ function auth_checkSession(token) {
   var props = PropertiesService.getScriptProperties();
   var data = props.getProperty(SESSION_KEY + '_' + token);
   if (data) {
-    return JSON.parse(data);
+    var user = JSON.parse(data);
+    return { success: true, user: user };
   }
-  return null;
+  return { success: false };
 }
 
 function auth_logout(token) {

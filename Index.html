@@ -748,7 +748,8 @@
         const loading = ref(!!store.token);
         if (store.token) {
           api('checkSession').then(function(res) {
-            if (res.success) { store.user = res.user; localStorage.setItem('sidori_user', JSON.stringify(res.user)); }
+            var user = res && res.success ? res.user : (res && res.email ? res : null);
+            if (user) { store.user = user; localStorage.setItem('sidori_user', JSON.stringify(user)); }
             else { store.token = null; store.user = null; localStorage.removeItem('sidori_token'); localStorage.removeItem('sidori_user'); }
             loading.value = false;
           });
