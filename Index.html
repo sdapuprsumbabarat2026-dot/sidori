@@ -143,7 +143,7 @@
       .main { padding-bottom: 1.5rem; }
       .bottom-nav { display: none !important; }
     }
-    @media (max-width: 767px) { .sidebar, .sidebar-backdrop, .nav-toggle { display: none !important; } .table-wrap { display: none; } }
+    @media (max-width: 767px) { .sidebar, .sidebar-backdrop, .nav-toggle { display: none !important; } .page:has(.card-list) > .table-wrap { display: none; } }
     @media (max-width: 639px) {
       .main { padding: calc(var(--navbar-h) + 0.75rem) 1rem calc(var(--bottom-nav-h) + 0.75rem); }
     }
