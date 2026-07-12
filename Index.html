@@ -143,6 +143,7 @@
       .main { padding-bottom: 1.5rem; }
       .bottom-nav { display: none !important; }
     }
+    @media (max-width: 767px) { .sidebar, .sidebar-backdrop, .nav-toggle { display: none !important; } }
     @media (max-width: 639px) {
       .main { padding: calc(var(--navbar-h) + 0.75rem) 1rem calc(var(--bottom-nav-h) + 0.75rem); }
     }
@@ -380,7 +381,7 @@
       template: `
         <div class="app-layout">
           <header class="navbar">
-            <button class="icon-btn" @click="toggleSidebar" aria-label="Toggle menu" v-html="I.menu"></button>
+            <button class="icon-btn nav-toggle" @click="toggleSidebar" aria-label="Toggle menu" v-html="I.menu"></button>
             <h1 class="nav-title">SIDORI</h1>
             <div class="nav-right">
               <button class="icon-btn" @click="toggleTheme" :title="isDark ? 'Mode Terang' : 'Mode Gelap'" :aria-label="isDark ? 'Mode Terang' : 'Mode Gelap'">
