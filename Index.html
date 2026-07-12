@@ -460,7 +460,7 @@
           { path: '/ubah-password', icon: I.key, label: 'Ganti Password', role: null },
         ];
         var menuItems = all.filter(function(m) { return !m.role || props.user.role === m.role; });
-        var bottomItems = all.filter(function(m) { return m.path !== '/kategori' && m.path !== '/users'; });
+        var bottomItems = all.filter(function(m) { return !m.role || props.user.role === m.role; });
 
         return { sidebarOpen, isDesktop, currentPath, isDark, menuItems, bottomItems, ml, toggleTheme, toggleSidebar, navClick, I, toasts };
       }
