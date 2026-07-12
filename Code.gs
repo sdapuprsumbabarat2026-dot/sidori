@@ -36,6 +36,7 @@ function doPost(e) {
       case 'dokumen_delete': result = dokumen_delete(token, data.id); break;
       case 'upload': result = upload_file(token, data); break;
       case 'changePassword': result = auth_changePassword(token, data); break;
+      case 'users_changePassword': result = users_changePassword(token, data.email, data.newPassword); break;
       default: result = { error: 'Unknown action' };
     }
     return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
@@ -168,6 +169,14 @@ function users_delete(token, email) {
     }
   }
   return { error: 'User not found' };
+}
+
+function users_changePassword(token, email, newPassword) {
+  var user = auth_checkSession(token);
+  if (!user || user.role !== 'Admin') return { error: 'Unauthorized' };
+  if (!newPassword || newPassword.length < 6) return { error: 'Password baru minimal 6 karakter' };
+  PropertiesService.getScriptProperties().setProperty('pass_' + email, newPassword);
+  return { success: true };
 }
 
 function kategori_list(token) {

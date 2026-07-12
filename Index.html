@@ -457,7 +457,6 @@
           { path: '/dokumen', icon: I.file, label: 'Dokumen', role: null },
           { path: '/kategori', icon: I.tag, label: 'Kategori', role: 'Admin' },
           { path: '/users', icon: I.users, label: 'Pengguna', role: 'Admin' },
-          { path: '/ubah-password', icon: I.key, label: 'Ganti Password', role: null },
         ];
         var menuItems = all.filter(function(m) { return !m.role || props.user.role === m.role; });
         var bottomItems = all.filter(function(m) { return !m.role || props.user.role === m.role; });
@@ -711,53 +710,22 @@
         <div class="page">
           <div class="page-header"><h2 class="page-title">Kelola Pengguna</h2><button class="btn btn-primary btn-sm" @click="show = !show"><span v-html="I.plus"></span>Tambah</button></div>
           <form v-if="show" class="inline-form" @submit.prevent="addUser"><input v-model="form.email" placeholder="Email" required type="email"><input v-model="form.nama" placeholder="Nama" required><select v-model="form.role" required><option value="">Role</option><option value="Admin">Admin</option><option value="Operator">Operator</option><option value="Viewer">Viewer</option><option value="Kabid">Kepala Bidang</option></select><input v-model="form.password" placeholder="Password" required type="password" style="min-width:120px"><button type="submit" class="btn btn-primary btn-sm"><span v-html="I.plus"></span>Simpan</button><button type="button" class="btn btn-ghost btn-sm" @click="show = false">Batal</button></form>
-          <div class="table-wrap"><table class="table"><thead><tr><th>Email</th><th>Nama</th><th>Role</th><th style="width:50px">Aksi</th></tr></thead><tbody><tr v-for="u in users" :key="u.email"><td>{{ u.email }}</td><td>{{ u.nama }}</td><td><StatusBadge :status="u.role"/></td><td><button class="btn btn-danger btn-xs" @click="hapus(u.email)" :disabled="u.email==='admin'"><span v-html="I.trash"></span></button></td></tr><tr v-if="!users.length"><td colspan="4"><div class="empty"><div class="empty-icon" v-html="I.users" style="opacity:0.2"></div><div class="empty-text">Belum ada pengguna</div></div></td></tr></tbody></table></div>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Email</th><th>Nama</th><th>Role</th><th style="width:110px">Aksi</th></tr></thead><tbody><tr v-for="u in users" :key="u.email"><td>{{ u.email }}</td><td>{{ u.nama }}</td><td><StatusBadge :status="u.role"/></td><td style="display:flex;gap:4px;align-items:center;border:none;padding:0.75rem 1rem"><button class="btn btn-ghost btn-xs" @click="pwEmail = u.email" title="Ganti Password"><span v-html="I.key"></span></button><button class="btn btn-danger btn-xs" @click="hapus(u.email)" :disabled="u.email==='admin'"><span v-html="I.trash"></span></button></td></tr><tr v-if="pwEmail"><td colspan="4"><form class="inline-form" @submit.prevent="changePw" style="margin:0;padding:0.75rem 1rem"><span style="font-weight:600;font-size:0.85rem">Password untuk {{ pwEmail }}</span><input v-model="pwVal" type="password" placeholder="Password baru" required minlength="6" style="min-width:120px"><button type="submit" class="btn btn-primary btn-xs">Simpan</button><button type="button" class="btn btn-ghost btn-xs" @click="pwEmail = ''">Batal</button></form></td></tr><tr v-if="!users.length"><td colspan="4"><div class="empty"><div class="empty-icon" v-html="I.users" style="opacity:0.2"></div><div class="empty-text">Belum ada pengguna</div></div></td></tr></tbody></table></div>
         </div>
       `,
       setup() {
         const users = ref([]); const show = ref(false); const form = reactive({ email: '', nama: '', role: '', password: '' });
+        const pwEmail = ref(''); const pwVal = ref('');
         function load() { api('users_list').then(function(u) { if (!u.error) users.value = u; }); }
         function addUser() { api('users_create', { data: { email: form.email, nama: form.nama, role: form.role, password: form.password } }).then(function() { form.email = ''; form.nama = ''; form.role = ''; form.password = ''; show.value = false; load(); toast('Pengguna ditambahkan', 'success'); }); }
         function hapus(email) { if (!confirm('Hapus pengguna ' + email + '?')) return; api('users_delete', { email: email }).then(function() { load(); toast('Pengguna dihapus', 'success'); }); }
+        function changePw() { api('users_changePassword', { email: pwEmail.value, newPassword: pwVal.value }).then(function(res) { if (res.success) { toast('Password ' + pwEmail.value + ' diubah', 'success'); pwEmail.value = ''; pwVal.value = ''; } else { toast(res.error, 'error'); } }); }
         onMounted(load);
-        return { users, show, form, addUser, hapus, I };
+        return { users, show, form, addUser, hapus, pwEmail, pwVal, changePw, I };
       }
     };
 
-    const UbahPassword = {
-      template: `
-        <div class="page">
-          <h2 class="page-title">Ganti Password</h2>
-          <div class="card form-card" style="max-width:440px">
-            <form @submit.prevent="submit">
-              <div class="field"><label for="old">Password Lama</label><input id="old" v-model="oldP" type="password" required placeholder="Masukkan password lama"></div>
-              <div class="field"><label for="new">Password Baru</label><input id="new" v-model="newP" type="password" required minlength="6" placeholder="Minimal 6 karakter"></div>
-              <div class="field"><label for="confirm">Konfirmasi Password Baru</label><input id="confirm" v-model="conP" type="password" required minlength="6" placeholder="Ulangi password baru"></div>
-              <p v-if="error" class="field-error"><span v-html="I.alert"></span>{{ error }}</p>
-              <p v-if="ok" class="field-success"><span v-html="I.check"></span>Password berhasil diubah</p>
-              <button type="submit" class="btn btn-primary btn-full" :disabled="submitting"><span v-if="submitting" class="spinner" style="width:20px;height:20px;border-width:2px"></span>{{ submitting ? 'Menyimpan...' : 'Simpan' }}</button>
-            </form>
-          </div>
-        </div>
-      `,
-      setup() {
-        const oldP = ref(''); const newP = ref(''); const conP = ref(''); const error = ref(''); const ok = ref(false); const submitting = ref(false);
-        function submit() {
-          error.value = ''; ok.value = false;
-          if (newP.value !== conP.value) { error.value = 'Konfirmasi password tidak cocok'; return; }
-          if (newP.value.length < 6) { error.value = 'Password baru minimal 6 karakter'; return; }
-          submitting.value = true;
-          api('changePassword', { oldPassword: oldP.value, newPassword: newP.value }).then(function(res) {
-            submitting.value = false;
-            if (res.success) { ok.value = true; oldP.value = ''; newP.value = ''; conP.value = ''; }
-            else { error.value = res.error; }
-          });
-        }
-        return { oldP, newP, conP, error, ok, submitting, submit, I };
-      }
-    };
-
-    routes = { '/dashboard': Dashboard, '/dokumen': DokumenList, '/dokumen/tambah': DokumenForm, '/dokumen/:id': DokumenDetail, '/dokumen/:id/edit': DokumenForm, '/kategori': KategoriList, '/users': UserList, '/ubah-password': UbahPassword };
+    routes = { '/dashboard': Dashboard, '/dokumen': DokumenList, '/dokumen/tambah': DokumenForm, '/dokumen/:id': DokumenDetail, '/dokumen/:id/edit': DokumenForm, '/kategori': KategoriList, '/users': UserList };
 
     const App = {
       components: { Login, AppLayout, RouterView, StatusBadge, SortIcon },
