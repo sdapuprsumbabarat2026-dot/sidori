@@ -1,10 +1,15 @@
+import { useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { Loader2 } from "lucide-react";
 
 export function ProtectedRoute({ children, adminOnly = false }: { children: React.ReactNode; adminOnly?: boolean }) {
-  const { user, loading } = useAuthStore();
+  const { user, loading, checkSession } = useAuthStore();
   const location = useLocation();
+
+  useEffect(() => {
+    if (loading && !user) checkSession();
+  }, []);
 
   if (loading) {
     return (

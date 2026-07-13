@@ -14,7 +14,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   token: localStorage.getItem("sidori_token"),
-  loading: true,
+  loading: !!localStorage.getItem("sidori_token"),
 
   login: async (email, password) => {
     const { data, error } = await supabase.rpc("auth_login", {
