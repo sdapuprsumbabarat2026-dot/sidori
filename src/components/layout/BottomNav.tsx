@@ -1,10 +1,11 @@
 import { NavLink } from "react-router-dom";
 import { cn } from "../../lib/utils";
-import { LayoutDashboard, Droplets, Users, MapPin, FileCheck } from "lucide-react";
+import { LayoutDashboard, Droplets, Users, MapPin, FileCheck, ListChecks } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 
 const items = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/usulan", icon: ListChecks, label: "Usulan" },
   { to: "/irigasi", icon: Droplets, label: "Irigasi" },
 ];
 

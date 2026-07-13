@@ -10,6 +10,7 @@ import AreaDocumentsPage from "./pages/AreaDocumentsPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminAreasPage from "./pages/admin/AdminAreasPage";
 import AdminReviewPage from "./pages/admin/AdminReviewPage";
+import UsulanPage from "./pages/UsulanPage";
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
             }
           >
             <Route index element={<DashboardPage />} />
+            <Route path="usulan" element={<UsulanPage />} />
             <Route path="irigasi" element={<IrrigationTypesPage />} />
             <Route path="irigasi/:typeId/areas" element={<IrrigationAreasPage />} />
             <Route path="area/:id" element={<AreaDocumentsPage />} />
