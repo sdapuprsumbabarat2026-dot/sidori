@@ -143,10 +143,12 @@ export default function AreaDocumentsPage() {
     if (!area) return;
     setUploadPhase("uploading");
     try {
-      const buffer = await file.arrayBuffer();
-      const bytes = new Uint8Array(buffer);
-      const binary = bytes.reduce((acc, b) => acc + String.fromCharCode(b), "");
-      const fileBase64 = btoa(binary);
+      const fileBase64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string).split(",")[1]);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
       const cat = categories.find((c) => c.id === uploadCategoryRef.current);
 
       const res = await fetch(GAS_URL, {

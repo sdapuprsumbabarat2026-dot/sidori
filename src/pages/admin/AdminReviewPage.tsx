@@ -6,16 +6,20 @@ import { Input } from "../../components/ui/input";
 import { Search, CheckCircle, XCircle, Eye, FileText, Loader2 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 
+const GAS_URL = import.meta.env.VITE_GAS_URL;
+const GAS_API_KEY = import.meta.env.VITE_GAS_API_KEY;
+
 export default function AdminReviewPage() {
   const { user } = useAuthStore();
   const [docs, setDocs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [moving, setMoving] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const loadDocs = async () => {
     const { data } = await supabase
       .from("documents")
-      .select("*, irrigation_areas(name), document_categories(name)")
+      .select("*, irrigation_areas!inner(name, irrigation_types!inner(name)), document_categories(name)")
       .eq("status", "review")
       .order("created_at", { ascending: false });
     if (data) setDocs(data);
@@ -24,8 +28,26 @@ export default function AdminReviewPage() {
 
   useEffect(() => { loadDocs(); }, []);
 
-  const handleReview = async (id: string, status: "approved" | "rejected") => {
-    await supabase.rpc("admin_review_document", { p_doc_id: id, p_status: status, p_reviewed_by: user?.id });
+  const handleReview = async (doc: any, status: "approved" | "rejected") => {
+    if (status === "approved" && doc.file_id) {
+      setMoving(doc.id);
+      try {
+        await fetch(GAS_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            _method: "MOVE",
+            apiKey: GAS_API_KEY,
+            fileId: doc.file_id,
+            year: (doc.year || new Date().getFullYear()).toString(),
+            irigationType: doc.irrigation_areas?.irrigation_types?.name || "",
+            category: doc.document_categories?.name || "",
+          }),
+        });
+      } catch { /* cleanup handled by admin */ }
+    }
+    await supabase.rpc("admin_review_document", { p_doc_id: doc.id, p_status: status, p_reviewed_by: user?.id });
+    setMoving(null);
     loadDocs();
   };
 
@@ -75,10 +97,10 @@ export default function AdminReviewPage() {
                         <Eye className="h-4 w-4" />
                       </a>
                     </Button>
-                    <Button variant="outline" size="sm" className="text-green-600" onClick={() => handleReview(doc.id, "approved")}>
-                      <CheckCircle className="h-4 w-4 mr-1" /> Setujui
+                    <Button variant="outline" size="sm" className="text-green-600" disabled={moving === doc.id} onClick={() => handleReview(doc, "approved")}>
+                      {moving === doc.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-1" />} Setujui
                     </Button>
-                    <Button variant="outline" size="sm" className="text-red-600" onClick={() => handleReview(doc.id, "rejected")}>
+                    <Button variant="outline" size="sm" className="text-red-600" disabled={moving === doc.id} onClick={() => handleReview(doc, "rejected")}>
                       <XCircle className="h-4 w-4 mr-1" /> Tolak
                     </Button>
                   </div>
