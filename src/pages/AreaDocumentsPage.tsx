@@ -72,6 +72,10 @@ export default function AreaDocumentsPage() {
   const [dragFile, setDragFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const existingDocForCategory = useCallback((catId: string) => {
+    return documents.find((d) => d.category_id === catId);
+  }, [documents]);
+
   const filteredDocs = searchQuery
     ? documents.filter(
         (d) =>
@@ -109,12 +113,20 @@ export default function AreaDocumentsPage() {
     setDragOver(false);
     const f = e.dataTransfer.files?.[0];
     if (f && f.size > MAX_FILE_SIZE) { alert("File terlalu besar. Maksimal 15 MB."); return; }
+    if (f && !uploadCategory) { alert("Pilih kategori terlebih dahulu."); return; }
+    if (f && uploadCategory && existingDocForCategory(uploadCategory)) {
+      alert("Dokumen untuk kategori ini sudah ada. Hapus dokumen yang ada terlebih dahulu jika ingin mengganti."); return;
+    }
     if (f) setDragFile(f);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (f && f.size > MAX_FILE_SIZE) { alert("File terlalu besar. Maksimal 15 MB."); return; }
+    if (f && !uploadCategory) { alert("Pilih kategori terlebih dahulu."); return; }
+    if (f && uploadCategory && existingDocForCategory(uploadCategory)) {
+      alert("Dokumen untuk kategori ini sudah ada. Hapus dokumen yang ada terlebih dahulu jika ingin mengganti."); return;
+    }
     if (f) { setDragFile(f); setDragOver(false) }
   };
 
@@ -187,6 +199,9 @@ export default function AreaDocumentsPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadCategory || !id || !user || !dragFile || !uploadedUrl) return;
+    if (existingDocForCategory(uploadCategory)) {
+      alert("Dokumen untuk kategori ini sudah ada. Tidak dapat menyimpan duplikat."); return;
+    }
     await supabase.from("documents").insert({
       irrigation_area_id: id,
       category_id: uploadCategory,
