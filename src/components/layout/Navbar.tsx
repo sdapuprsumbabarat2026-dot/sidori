@@ -20,7 +20,7 @@ export default function Navbar({ onToggleSidebar }: { onToggleSidebar: () => voi
           <Menu className="h-5 w-5" />
         </Button>
         <div className="flex items-center gap-2 flex-1">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold">S</div>
+          <img src="/logo.png" alt="SIDORI" className="h-8 w-auto" />
           <span className="font-semibold text-lg">SIDORI</span>
         </div>
         <div className="flex items-center gap-1">

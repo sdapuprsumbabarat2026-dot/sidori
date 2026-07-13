@@ -36,7 +36,7 @@ export default function LoginPage() {
       <Card className="relative w-full max-w-sm">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-3">
-            <div className="h-14 w-14 rounded-xl bg-primary flex items-center justify-center text-primary-foreground text-xl font-bold">S</div>
+            <img src="/logo.png" alt="SIDORI" className="h-16 w-auto" />
           </div>
           <CardTitle className="text-xl">SIDORI</CardTitle>
           <CardDescription>Sistem Inventarisasi Dokumen Perencanaan Irigasi</CardDescription>
