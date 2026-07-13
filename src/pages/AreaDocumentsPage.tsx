@@ -286,61 +286,68 @@ export default function AreaDocumentsPage() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>File</Label>
-                {uploadPhase === "done" ? (
-                  <div className="border rounded-lg p-4 bg-muted/30">
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-full bg-green-100 dark:bg-green-900 p-1.5">
-                        <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+              {uploadCategory ? (
+                <div className="space-y-2">
+                  <Label>File</Label>
+                  {uploadPhase === "done" ? (
+                    <div className="border rounded-lg p-4 bg-muted/30">
+                      <div className="flex items-center gap-3">
+                        <div className="rounded-full bg-green-100 dark:bg-green-900 p-1.5">
+                          <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium truncate">{dragFile!.name}</p>
+                          <p className="text-xs text-muted-foreground">{formatSize(dragFile!.size)} &middot; Tersimpan di Google Drive</p>
+                        </div>
+                        <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={removeDragFile}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium truncate">{dragFile!.name}</p>
-                        <p className="text-xs text-muted-foreground">{formatSize(dragFile!.size)} &middot; Tersimpan di Google Drive</p>
+                    </div>
+                  ) : uploadPhase === "uploading" ? (
+                    <div className="border rounded-lg p-6 text-center bg-muted/30">
+                      <Loader2 className="h-8 w-8 mx-auto mb-3 animate-spin text-primary" />
+                      <p className="text-sm font-medium">Mengupload ke Google Drive...</p>
+                      <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-primary rounded-full animate-pulse" style={{ width: "60%" }} />
                       </div>
-                      <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={removeDragFile}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </div>
-                  </div>
-                ) : uploadPhase === "uploading" ? (
-                  <div className="border rounded-lg p-6 text-center bg-muted/30">
-                    <Loader2 className="h-8 w-8 mx-auto mb-3 animate-spin text-primary" />
-                    <p className="text-sm font-medium">Mengupload ke Google Drive...</p>
-                    <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-primary rounded-full animate-pulse" style={{ width: "60%" }} />
-                    </div>
-                  </div>
-                ) : dragFile ? (
-                  <div className="relative border rounded-lg p-4 bg-muted/30">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-8 w-8 text-primary shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium truncate">{dragFile.name}</p>
-                        <p className="text-xs text-muted-foreground">{formatSize(dragFile.size)} &middot; {dragFile.type || "Unknown"}</p>
+                  ) : dragFile ? (
+                    <div className="relative border rounded-lg p-4 bg-muted/30">
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-8 w-8 text-primary shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium truncate">{dragFile.name}</p>
+                          <p className="text-xs text-muted-foreground">{formatSize(dragFile.size)} &middot; {dragFile.type || "Unknown"}</p>
+                        </div>
+                        <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={removeDragFile}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={removeDragFile}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </div>
-                  </div>
-                ) : (
-                  <div
-                    className={`relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-                      dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
-                    }`}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-sm font-medium">Seret file ke sini atau klik untuk pilih</p>
-                    <p className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG, DOC, XLS — Maks 15MB</p>
-                    <Input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} />
-                  </div>
-                )}
-              </div>
+                  ) : (
+                    <div
+                      className={`relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+                        dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                      }`}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-sm font-medium">Seret file ke sini atau klik untuk pilih</p>
+                      <p className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG, DOC, XLS — Maks 15MB</p>
+                      <Input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="border-2 border-dashed rounded-lg p-6 text-center text-muted-foreground">
+                  <Upload className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Pilih kategori terlebih dahulu</p>
+                </div>
+              )}
 
               {uploadPhase === "done" ? (
                 <Button type="submit" disabled={!uploadCategory} className="w-full">
