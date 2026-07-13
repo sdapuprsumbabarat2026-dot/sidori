@@ -145,6 +145,7 @@ export default function AreaDocumentsPage() {
       const bytes = new Uint8Array(buffer);
       const binary = bytes.reduce((acc, b) => acc + String.fromCharCode(b), "");
       const fileBase64 = btoa(binary);
+      const cat = categories.find((c) => c.id === uploadCategory);
 
       const res = await fetch(GAS_URL, {
         method: "POST",
@@ -155,7 +156,7 @@ export default function AreaDocumentsPage() {
           fileName: file.name,
           mimeType: file.type,
           irigationType: area.irrigation_types?.name || "",
-          category: "",
+          category: cat?.name || "",
           year: uploadYear,
         }),
       });

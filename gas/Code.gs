@@ -15,15 +15,17 @@ function doPost(e) {
     if (data.apiKey !== API_KEY) return sendJson({ error: "Invalid API key" }, 403)
 
     const { fileBase64, fileName, mimeType, irigationType, category, year } = data
-    if (!fileBase64 || !fileName || !irigationType || !category) {
+    if (!fileBase64 || !fileName || !irigationType) {
       return sendJson({ error: "Missing required fields" }, 400)
     }
+
+    const catName = category || "Uncategorized"
 
     // Create folder structure: SIDORI / {year} / {irigationType} / {category}
     const root = ensureFolder(FOLDER_NAME)
     const yearFolder = ensureFolder(year, root)
     const typeFolder = ensureFolder(irigationType, yearFolder)
-    const catFolder = ensureFolder(category, typeFolder)
+    const catFolder = ensureFolder(catName, typeFolder)
 
     const blob = Utilities.newBlob(Utilities.base64Decode(fileBase64), mimeType || "application/octet-stream", fileName)
     const file = catFolder.createFile(blob)
