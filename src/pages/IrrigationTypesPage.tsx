@@ -36,7 +36,7 @@ export default function IrrigationTypesPage() {
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {types.map((type) => (
-          <Card key={type.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/area/${type.id}`)}>
+          <Card key={type.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/irigasi/${type.id}/areas`)}>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <div className="rounded-lg bg-primary/10 p-2">

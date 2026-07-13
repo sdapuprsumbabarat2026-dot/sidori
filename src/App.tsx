@@ -5,6 +5,7 @@ import AppLayout from "./components/layout/AppLayout";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import IrrigationTypesPage from "./pages/IrrigationTypesPage";
+import IrrigationAreasPage from "./pages/IrrigationAreasPage";
 import AreaDocumentsPage from "./pages/AreaDocumentsPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminAreasPage from "./pages/admin/AdminAreasPage";
@@ -25,6 +26,7 @@ export default function App() {
           >
             <Route index element={<DashboardPage />} />
             <Route path="irigasi" element={<IrrigationTypesPage />} />
+            <Route path="irigasi/:typeId/areas" element={<IrrigationAreasPage />} />
             <Route path="area/:id" element={<AreaDocumentsPage />} />
             <Route path="admin/users" element={<ProtectedRoute adminOnly><AdminUsersPage /></ProtectedRoute>} />
             <Route path="admin/areas" element={<ProtectedRoute adminOnly><AdminAreasPage /></ProtectedRoute>} />
