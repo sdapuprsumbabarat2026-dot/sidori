@@ -413,7 +413,7 @@ export default function AreaDocumentsPage() {
                     {user?.role === "super_admin" && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="text-destructive opacity-0 group-hover:opacity-100 transition-opacity" title="Hapus">
+                          <Button variant="ghost" size="icon" className="text-destructive" title="Hapus">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
