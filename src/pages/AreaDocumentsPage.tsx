@@ -78,7 +78,7 @@ export default function AreaDocumentsPage() {
   const loadData = useCallback(() => {
     if (!id) return;
     Promise.all([
-      supabase.from("irrigation_areas").select("*, irrigation_types(name)").eq("id", id).single().then(({ data }) => setArea(data as any)),
+      supabase.from("irrigation_areas").select("*, irrigation_types(name)").eq("id", id).maybeSingle().then(({ data }) => setArea(data as any)),
       supabase.from("document_categories").select("*").order("sort_order").then(({ data }) => setCategories(data || [])),
       supabase
         .from("documents")
