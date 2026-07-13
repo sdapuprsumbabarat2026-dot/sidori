@@ -117,7 +117,7 @@ export default function AreaDocumentsPage() {
     if (f && uploadCategory && existingDocForCategory(uploadCategory)) {
       alert("Dokumen untuk kategori ini sudah ada. Hapus dokumen yang ada terlebih dahulu jika ingin mengganti."); return;
     }
-    if (f) setDragFile(f);
+    if (f) { removeDragFile(); setTimeout(() => setDragFile(f), 0) }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,7 +127,7 @@ export default function AreaDocumentsPage() {
     if (f && uploadCategory && existingDocForCategory(uploadCategory)) {
       alert("Dokumen untuk kategori ini sudah ada. Hapus dokumen yang ada terlebih dahulu jika ingin mengganti."); return;
     }
-    if (f) { setDragFile(f); setDragOver(false) }
+    if (f) { removeDragFile(); setTimeout(() => { setDragFile(f); setDragOver(false) }, 0) }
   };
 
   const removeDragFile = () => {
@@ -163,9 +163,12 @@ export default function AreaDocumentsPage() {
       });
       const cat = categories.find((c) => c.id === uploadCategoryRef.current);
 
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 120000);
       const res = await fetch(GAS_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain" },
+        signal: controller.signal,
         body: JSON.stringify({
           apiKey: GAS_API_KEY,
           fileBase64,
@@ -176,6 +179,7 @@ export default function AreaDocumentsPage() {
           year: uploadYear,
         }),
       });
+      clearTimeout(timer);
 
       const result = await res.json();
       if (!result.success) {
@@ -187,7 +191,6 @@ export default function AreaDocumentsPage() {
       setUploadedFileId(result.fileId);
       setUploadPhase("done");
     } catch (err) {
-      alert("Upload ke Google Drive gagal: " + (err instanceof Error ? err.message : "unknown"));
       setUploadPhase("error");
     }
   }, [area, uploadYear, categories]);
@@ -327,6 +330,19 @@ export default function AreaDocumentsPage() {
                       <p className="text-sm font-medium">Mengupload ke Google Drive...</p>
                       <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
                         <div className="h-full bg-primary rounded-full animate-pulse" style={{ width: "60%" }} />
+                      </div>
+                    </div>
+                  ) : uploadPhase === "error" ? (
+                    <div className="border rounded-lg p-6 text-center bg-destructive/5 border border-destructive/30">
+                      <p className="text-sm font-medium text-destructive mb-1">Upload gagal</p>
+                      <p className="text-xs text-muted-foreground mb-3">Coba lagi atau pilih file lain</p>
+                      <div className="flex justify-center gap-2">
+                        <Button type="button" size="sm" variant="outline" onClick={() => dragFile && uploadFileToGAS(dragFile)}>
+                          <Upload className="h-3 w-3 mr-1" /> Ulangi
+                        </Button>
+                        <Button type="button" size="sm" variant="ghost" onClick={removeDragFile}>
+                          Ganti File
+                        </Button>
                       </div>
                     </div>
                   ) : dragFile ? (
