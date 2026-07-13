@@ -4,20 +4,27 @@ import { supabase } from "../lib/supabase";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import { StatusBadge } from "../components/StatusBadge";
+import { useAuthStore } from "../store/authStore";
+import { MapPin, FileText, Search, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
 
-import { MapPin, FileText, Search, ArrowLeft, Loader2, ExternalLink } from "lucide-react";
+const TOTAL_CATEGORIES = 9;
 
 export default function IrrigationAreasPage() {
   const { typeId } = useParams<{ typeId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [irrigationType, setIrrigationType] = useState<{ name: string } | null>(null);
   const [areas, setAreas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const filtered = searchQuery
     ? areas.filter((a) => a.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : areas;
+
+  const isAdmin = user?.role === "super_admin";
 
   useEffect(() => {
     if (!typeId) return;
@@ -26,6 +33,19 @@ export default function IrrigationAreasPage() {
       supabase.from("irrigation_areas").select("*, documents(status)").eq("irrigation_type_id", typeId).order("name").then(({ data }) => setAreas(data || [])),
     ]).finally(() => setLoading(false));
   }, [typeId]);
+
+  const setStatus = async (areaId: string, status: string) => {
+    setUpdating(areaId);
+    await supabase.rpc("admin_update_area", {
+      p_area_id: areaId,
+      p_name: areas.find((a) => a.id === areaId)?.name,
+      p_irrigation_type_id: areas.find((a) => a.id === areaId)?.irrigation_type_id,
+      p_status: status,
+    });
+    const { data } = await supabase.from("irrigation_areas").select("*, documents(status)").eq("irrigation_type_id", typeId).order("name");
+    if (data) setAreas(data);
+    setUpdating(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -55,24 +75,51 @@ export default function IrrigationAreasPage() {
             </CardContent>
           </Card>
         ) : (
-          filtered.map((area) => (
-            <Card key={area.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/area/${area.id}`)}>
-              <CardContent className="flex items-center justify-between py-4">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="rounded-lg bg-primary/10 p-2">
-                    <MapPin className="h-5 w-5 text-primary" />
+          filtered.map((area) => {
+            const approved = area.documents?.filter((d: any) => d.status === "approved").length || 0;
+            const allApproved = approved >= TOTAL_CATEGORIES;
+            return (
+              <Card key={area.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/area/${area.id}`)}>
+                <CardContent className="py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="rounded-lg bg-primary/10 p-2">
+                        <MapPin className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium truncate">{area.name}</p>
+                          <StatusBadge status={area.status} />
+                        </div>
+                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <FileText className="h-3 w-3" /> {approved}/{TOTAL_CATEGORIES} disetujui
+                          </span>
+                        </div>
+                        <div className="mt-1.5 w-full max-w-[200px] bg-muted rounded-full h-1.5">
+                          <div
+                            className={`h-1.5 rounded-full transition-all ${allApproved ? "bg-green-500" : "bg-primary"}`}
+                            style={{ width: `${(approved / TOTAL_CATEGORIES) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    {isAdmin && allApproved && area.status !== "approved" && area.status !== "stock_program" && (
+                      <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <Button size="sm" className="text-xs" disabled={updating === area.id} onClick={() => setStatus(area.id, "approved")}>
+                          {updating === area.id ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <CheckCircle2 className="h-3 w-3 mr-1" />}
+                          Disetujui
+                        </Button>
+                        <Button size="sm" variant="secondary" className="text-xs" disabled={updating === area.id} onClick={() => setStatus(area.id, "stock_program")}>
+                          Stock Program
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                  <div className="min-w-0">
-                    <p className="font-medium truncate">{area.name}</p>
-                    <p className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
-                      <FileText className="h-3 w-3" /> {area.documents?.length || 0} dokumen
-                    </p>
-                  </div>
-                </div>
-                <ExternalLink className="h-5 w-5 text-muted-foreground shrink-0" />
-              </CardContent>
-            </Card>
-          ))
+                </CardContent>
+              </Card>
+            );
+          })
         )}
       </div>
     </div>
