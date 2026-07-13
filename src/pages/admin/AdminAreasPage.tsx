@@ -13,7 +13,7 @@ import {
   DialogTrigger,
 } from "../../components/ui/dialog";
 import { StatusBadge } from "../../components/StatusBadge";
-import { Plus, Loader2, Trash2, ExternalLink } from "lucide-react";
+import { Plus, Loader2, Trash2, ExternalLink, Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { IrrigationArea, IrrigationType } from "../../types";
 
@@ -21,10 +21,13 @@ export default function AdminAreasPage() {
   const [areas, setAreas] = useState<(IrrigationArea & { irrigation_types: { name: string }; documents: { status: string }[] })[]>([]);
   const [types, setTypes] = useState<IrrigationType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [name, setName] = useState("");
-  const [typeId, setTypeId] = useState("");
-  const [status, setStatus] = useState("active");
   const [submitting, setSubmitting] = useState(false);
+  const [editArea, setEditArea] = useState<any>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [formName, setFormName] = useState("");
+  const [formTypeId, setFormTypeId] = useState("");
+  const [formStatus, setFormStatus] = useState("active");
   const navigate = useNavigate();
 
   const loadData = async () => {
@@ -39,12 +42,26 @@ export default function AdminAreasPage() {
 
   useEffect(() => { loadData(); }, []);
 
+  const resetForm = () => { setFormName(""); setFormTypeId(""); setFormStatus("active") };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    await supabase.rpc("admin_create_area", { p_name: name, p_irrigation_type_id: typeId, p_status: status });
+    await supabase.rpc("admin_create_area", { p_name: formName, p_irrigation_type_id: formTypeId, p_status: formStatus });
     setSubmitting(false);
-    setName(""); setTypeId(""); setStatus("active");
+    resetForm();
+    setCreateOpen(false);
+    loadData();
+  };
+
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editArea) return;
+    setSubmitting(true);
+    await supabase.rpc("admin_update_area", { p_area_id: editArea.id, p_name: formName, p_irrigation_type_id: formTypeId, p_status: formStatus });
+    setSubmitting(false);
+    setEditArea(null);
+    setEditOpen(false);
     loadData();
   };
 
@@ -54,6 +71,14 @@ export default function AdminAreasPage() {
     loadData();
   };
 
+  const openEdit = (area: any) => {
+    setEditArea(area);
+    setFormName(area.name);
+    setFormTypeId(area.irrigation_type_id);
+    setFormStatus(area.status);
+    setEditOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -61,7 +86,7 @@ export default function AdminAreasPage() {
           <h1 className="text-2xl font-bold tracking-tight">Daerah Irigasi</h1>
           <p className="text-muted-foreground">Kelola daerah irigasi.</p>
         </div>
-        <Dialog>
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" /> Tambah
@@ -74,11 +99,11 @@ export default function AdminAreasPage() {
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="space-y-2">
                 <Label>Nama Daerah Irigasi</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} required />
+                <Input value={formName} onChange={(e) => setFormName(e.target.value)} required />
               </div>
               <div className="space-y-2">
                 <Label>Jenis Irigasi</Label>
-                <Select value={typeId} onValueChange={setTypeId} required>
+                <Select value={formTypeId} onValueChange={setFormTypeId} required>
                   <SelectTrigger><SelectValue placeholder="Pilih jenis" /></SelectTrigger>
                   <SelectContent>
                     {types.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
@@ -87,7 +112,7 @@ export default function AdminAreasPage() {
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>
-                <Select value={status} onValueChange={setStatus}>
+                <Select value={formStatus} onValueChange={setFormStatus}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Aktif</SelectItem>
@@ -121,10 +146,13 @@ export default function AdminAreasPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <StatusBadge status={a.status} />
-                    <Button variant="ghost" size="icon" onClick={() => navigate(`/area/${a.id}`)}>
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(a)} title="Edit">
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => navigate(`/area/${a.id}`)} title="Lihat dokumen">
                       <ExternalLink className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(a.id)}>
+                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(a.id)} title="Hapus">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -134,6 +162,46 @@ export default function AdminAreasPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Daerah Irigasi</DialogTitle>
+          </DialogHeader>
+          {editArea && (
+            <form onSubmit={handleEdit} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Nama Daerah Irigasi</Label>
+                <Input value={formName} onChange={(e) => setFormName(e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label>Jenis Irigasi</Label>
+                <Select value={formTypeId} onValueChange={setFormTypeId} required>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {types.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select value={formStatus} onValueChange={setFormStatus}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Aktif</SelectItem>
+                    <SelectItem value="approved">Disetujui</SelectItem>
+                    <SelectItem value="stock_program">Stock Program</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button type="submit" disabled={submitting} className="w-full">
+                {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Simpan Perubahan
+              </Button>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

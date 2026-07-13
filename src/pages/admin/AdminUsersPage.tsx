@@ -12,7 +12,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../../components/ui/dialog";
-import { StatusBadge } from "../../components/StatusBadge";
 import { UserPlus, Loader2, Trash2 } from "lucide-react";
 import type { User } from "../../types";
 
@@ -118,8 +117,14 @@ export default function AdminUsersPage() {
                       <p className="text-sm text-muted-foreground">{u.email}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <StatusBadge status={u.role === "super_admin" ? "approved" : "active"} />
+                    <div className="flex items-center gap-2">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      u.role === "super_admin"
+                        ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400"
+                        : "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+                    }`}>
+                      {u.role === "super_admin" ? "Super Admin" : "User"}
+                    </span>
                     {u.role !== "super_admin" && (
                       <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(u.id)}>
                         <Trash2 className="h-4 w-4" />
