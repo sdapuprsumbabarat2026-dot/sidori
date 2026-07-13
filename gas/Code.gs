@@ -6,10 +6,8 @@ function doGet(e) {
 }
 
 function doPost(e) {
-  if (e.postData.type === "application/x-www-form-urlencoded") {
-    const params = e.parameter
-    if (params._method === "DELETE") return handleDelete(params)
-  }
+  const params = e.parameter
+  if (params && params._method === "DELETE") return handleDelete(params)
   try {
     const data = JSON.parse(e.postData.contents)
     if (data.apiKey !== API_KEY) return sendJson({ error: "Invalid API key" }, 403)
@@ -42,7 +40,7 @@ function handleDelete(params) {
     if (params.apiKey !== API_KEY) return sendJson({ error: "Invalid API key" }, 403)
     if (!params.fileId) return sendJson({ error: "fileId required" }, 400)
     const file = DriveApp.getFileById(params.fileId)
-    if (file.getParents().next().getName().startsWith(FOLDER_NAME)) file.setTrashed(true)
+    file.setTrashed(true)
     return sendJson({ success: true })
   } catch (err) {
     return sendJson({ error: err.message }, 500)
