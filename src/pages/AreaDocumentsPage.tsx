@@ -176,7 +176,7 @@ export default function AreaDocumentsPage() {
       alert("Upload ke Google Drive gagal: " + (err instanceof Error ? err.message : "unknown"));
       setUploadPhase("error");
     }
-  }, [area, uploadYear]);
+  }, [area, uploadYear, categories]);
 
   useEffect(() => {
     if (dragFile && uploadPhase === "idle") uploadFileToGAS(dragFile);
