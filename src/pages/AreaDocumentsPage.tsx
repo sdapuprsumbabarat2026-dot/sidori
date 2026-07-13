@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { Card, CardContent } from "../components/ui/card";
@@ -13,13 +13,42 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../components/ui/alert-dialog";
 import { StatusBadge } from "../components/StatusBadge";
-import { Loader2, Upload, Eye, FileText, Search } from "lucide-react";
+import {
+  Loader2, Upload, Eye, FileText, Search, Trash2,
+  Calendar, HardDrive, Clock
+} from "lucide-react";
 import type { IrrigationArea, DocumentCategory } from "../types";
 import { useAuthStore } from "../store/authStore";
 
 const GAS_URL = import.meta.env.VITE_GAS_URL;
 const GAS_API_KEY = import.meta.env.VITE_GAS_API_KEY;
+const CURRENT_YEAR = new Date().getFullYear();
+const YEARS = Array.from({ length: 16 }, (_, i) => CURRENT_YEAR - 5 + i);
+
+function formatSize(bytes: number) {
+  if (!bytes) return "-";
+  const units = ["B", "KB", "MB", "GB"];
+  let i = 0;
+  let size = bytes;
+  while (size >= 1024 && i < units.length - 1) { size /= 1024; i++ }
+  return `${size.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+}
+
+function formatDate(ts: string) {
+  return new Date(ts).toLocaleDateString("id-ID", { year: "numeric", month: "short", day: "numeric" });
+}
 
 export default function AreaDocumentsPage() {
   const { id } = useParams<{ id: string }>();
@@ -29,19 +58,24 @@ export default function AreaDocumentsPage() {
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [uploadCategory, setUploadCategory] = useState<string>("");
+  const [uploadCategory, setUploadCategory] = useState("");
+  const [uploadYear, setUploadYear] = useState(CURRENT_YEAR.toString());
   const [searchQuery, setSearchQuery] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const [dragFile, setDragFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredDocs = searchQuery
     ? documents.filter(
         (d) =>
           d.file_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          d.document_categories?.name.toLowerCase().includes(searchQuery.toLowerCase())
+          d.document_categories?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          d.year?.toString().includes(searchQuery)
       )
     : documents;
 
-  useEffect(() => {
+  const loadData = useCallback(() => {
     if (!id) return;
     Promise.all([
       supabase.from("irrigation_areas").select("*, irrigation_types(name)").eq("id", id).single().then(({ data }) => setArea(data as any)),
@@ -55,34 +89,54 @@ export default function AreaDocumentsPage() {
     ]).finally(() => setLoading(false));
   }, [id]);
 
+  useEffect(() => { loadData() }, [loadData]);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = () => setDragOver(false);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const f = e.dataTransfer.files?.[0];
+    if (f) setDragFile(f);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (f) { setDragFile(f); setDragOver(false) }
+  };
+
+  const removeDragFile = () => {
+    setDragFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!uploadCategory || !id || !user) return;
-    const file = fileInputRef.current?.files?.[0];
-    if (!file) return;
-
+    if (!uploadCategory || !id || !user || !dragFile) return;
     setUploading(true);
-
     try {
-      // Read file as base64
-      const buffer = await file.arrayBuffer();
+      const buffer = await dragFile.arrayBuffer();
       const bytes = new Uint8Array(buffer);
       const binary = bytes.reduce((acc, b) => acc + String.fromCharCode(b), "");
       const fileBase64 = btoa(binary);
-
       const category = categories.find((c) => c.id === uploadCategory);
-      // Upload via Google Apps Script → Google Drive
+
       const res = await fetch(GAS_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           apiKey: GAS_API_KEY,
           fileBase64,
-          fileName: file.name,
-          mimeType: file.type,
+          fileName: dragFile.name,
+          mimeType: dragFile.type,
           irigationType: area?.irrigation_types?.name || "",
           category: category?.name || "",
-          year: new Date().getFullYear().toString(),
+          year: uploadYear,
         }),
       });
 
@@ -93,30 +147,32 @@ export default function AreaDocumentsPage() {
         return;
       }
 
-      // Save document record with Google Drive URL
       await supabase.from("documents").insert({
         irrigation_area_id: id,
         category_id: uploadCategory,
-        file_name: file.name,
+        file_name: dragFile.name,
         file_url: result.fileUrl,
+        file_size: dragFile.size,
+        year: parseInt(uploadYear),
         status: "review",
         uploaded_by: user.id,
       });
 
+      removeDragFile();
       setUploadCategory("");
-      if (fileInputRef.current) fileInputRef.current.value = "";
-
-      const { data: newDocs } = await supabase
-        .from("documents")
-        .select("*, document_categories(name)")
-        .eq("irrigation_area_id", id)
-        .order("created_at", { ascending: false });
-      if (newDocs) setDocuments(newDocs);
+      setUploadYear(CURRENT_YEAR.toString());
+      setDialogOpen(false);
+      loadData();
     } catch (err) {
       alert("Upload gagal: " + (err instanceof Error ? err.message : "unknown"));
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleDelete = async (doc: any) => {
+    await supabase.rpc("admin_delete_document", { p_doc_id: doc.id });
+    loadData();
   };
 
   if (loading) {
@@ -129,47 +185,99 @@ export default function AreaDocumentsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{area?.name || "Daerah Irigasi"}</h1>
-        <p className="text-muted-foreground">{area?.irrigation_types?.name}</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{area?.name || "Daerah Irigasi"}</h1>
+          <p className="text-sm text-muted-foreground">{area?.irrigation_types?.name}</p>
+        </div>
+        <div className="text-sm text-muted-foreground">
+          {documents.length} dokumen
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Cari dokumen..." className="pl-10" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+          <Input
+            placeholder="Cari dokumen..."
+            className="pl-10"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
-        <Dialog>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Upload className="h-4 w-4 mr-2" /> Upload Dokumen
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>Upload Dokumen</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleUpload} className="space-y-4">
+            <form onSubmit={handleUpload} className="space-y-5">
               <div className="space-y-2">
                 <Label>Kategori</Label>
                 <Select value={uploadCategory} onValueChange={setUploadCategory} required>
-                  <SelectTrigger className="bg-background">
+                  <SelectTrigger>
                     <SelectValue placeholder="Pilih kategori" />
                   </SelectTrigger>
-                  <SelectContent className="bg-popover border shadow-lg z-[100]">
+                  <SelectContent>
                     {categories.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name}
-                      </SelectItem>
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-2">
+                <Label>Tahun Dokumen</Label>
+                <Select value={uploadYear} onValueChange={setUploadYear}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {YEARS.map((y) => (
+                      <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="space-y-2">
                 <Label>File</Label>
-                <Input ref={fileInputRef} type="file" required className="cursor-pointer" />
+                {dragFile ? (
+                  <div className="relative border rounded-lg p-4 bg-muted/30">
+                    <div className="flex items-center gap-3">
+                      <FileText className="h-8 w-8 text-primary shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium truncate">{dragFile.name}</p>
+                        <p className="text-xs text-muted-foreground">{formatSize(dragFile.size)} &middot; {dragFile.type || "Unknown"}</p>
+                      </div>
+                      <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={removeDragFile}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className={`relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+                      dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                    }`}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm font-medium">Seret file ke sini atau klik untuk pilih</p>
+                    <p className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG, DOC, XLS — Maks 10MB</p>
+                    <Input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} />
+                  </div>
+                )}
               </div>
-              <Button type="submit" disabled={uploading} className="w-full">
+
+              <Button type="submit" disabled={uploading || !dragFile} className="w-full">
                 {uploading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                 {uploading ? "Mengupload ke Google Drive..." : "Upload"}
               </Button>
@@ -183,27 +291,72 @@ export default function AreaDocumentsPage() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <FileText className="h-12 w-12 mb-3 opacity-50" />
-              <p>Belum ada dokumen</p>
+              <p>{searchQuery ? "Dokumen tidak ditemukan" : "Belum ada dokumen"}</p>
+              {!searchQuery && (
+                <Button variant="link" onClick={() => setDialogOpen(true)}>Upload dokumen pertama</Button>
+              )}
             </CardContent>
           </Card>
         ) : (
           filteredDocs.map((doc) => (
-            <Card key={doc.id}>
-              <CardContent className="flex items-center justify-between py-4">
-                <div className="flex items-center gap-3 min-w-0">
-                  <FileText className="h-5 w-5 shrink-0 text-muted-foreground" />
-                  <div className="min-w-0">
-                    <p className="font-medium truncate">{doc.file_name}</p>
-                    <p className="text-xs text-muted-foreground">{doc.document_categories?.name}</p>
+            <Card key={doc.id} className="group">
+              <CardContent className="py-4">
+                <div className="flex items-start gap-4">
+                  <div className="rounded-lg bg-primary/10 p-2.5 shrink-0 hidden sm:block">
+                    <FileText className="h-5 w-5 text-primary" />
                   </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <StatusBadge status={doc.status} />
-                  <Button variant="ghost" size="icon" asChild>
-                    <a href={doc.file_url} target="_blank" rel="noopener noreferrer">
-                      <Eye className="h-4 w-4" />
-                    </a>
-                  </Button>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{doc.file_name}</p>
+                        <p className="text-xs text-muted-foreground">{doc.document_categories?.name}</p>
+                      </div>
+                      <StatusBadge status={doc.status} />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground">
+                      {doc.year && (
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" /> {doc.year}
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" /> {formatDate(doc.created_at)}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <HardDrive className="h-3 w-3" /> {formatSize(doc.file_size)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button variant="ghost" size="icon" asChild title="Lihat">
+                      <a href={doc.file_url} target="_blank" rel="noopener noreferrer">
+                        <Eye className="h-4 w-4" />
+                      </a>
+                    </Button>
+                    {user?.role === "super_admin" && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="text-destructive opacity-0 group-hover:opacity-100 transition-opacity" title="Hapus">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Hapus Dokumen</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Yakin ingin menghapus <strong>{doc.file_name}</strong>? Tindakan ini tidak bisa dibatalkan.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Batal</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(doc)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                              Hapus
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
