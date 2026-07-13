@@ -25,7 +25,7 @@ export default function AdminReviewPage() {
   useEffect(() => { loadDocs(); }, []);
 
   const handleReview = async (id: string, status: "approved" | "rejected") => {
-    await supabase.from("documents").update({ status, reviewed_by: user?.id }).eq("id", id);
+    await supabase.rpc("admin_review_document", { p_doc_id: id, p_status: status, p_reviewed_by: user?.id });
     loadDocs();
   };
 

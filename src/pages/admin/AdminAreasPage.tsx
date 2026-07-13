@@ -42,7 +42,7 @@ export default function AdminAreasPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    await supabase.from("irrigation_areas").insert({ name, irrigation_type_id: typeId, status });
+    await supabase.rpc("admin_create_area", { p_name: name, p_irrigation_type_id: typeId, p_status: status });
     setSubmitting(false);
     setName(""); setTypeId(""); setStatus("active");
     loadData();
@@ -50,7 +50,7 @@ export default function AdminAreasPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Hapus daerah irigasi ini?")) return;
-    await supabase.from("irrigation_areas").delete().eq("id", id);
+    await supabase.rpc("admin_delete_area", { p_area_id: id });
     loadData();
   };
 

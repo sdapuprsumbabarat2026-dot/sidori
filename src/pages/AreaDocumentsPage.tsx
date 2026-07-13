@@ -18,7 +18,8 @@ import { Loader2, Upload, Eye, FileText, Search } from "lucide-react";
 import type { IrrigationArea, DocumentCategory } from "../types";
 import { useAuthStore } from "../store/authStore";
 
-const EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-drive-upload`;
+const GAS_URL = import.meta.env.VITE_GAS_URL;
+const GAS_API_KEY = import.meta.env.VITE_GAS_API_KEY;
 
 export default function AreaDocumentsPage() {
   const { id } = useParams<{ id: string }>();
@@ -69,17 +70,19 @@ export default function AreaDocumentsPage() {
       const binary = bytes.reduce((acc, b) => acc + String.fromCharCode(b), "");
       const fileBase64 = btoa(binary);
 
-      // Upload via Edge Function → Google Drive
-      const res = await fetch(EDGE_FUNCTION_URL, {
+      const category = categories.find((c) => c.id === uploadCategory);
+      // Upload via Google Apps Script → Google Drive
+      const res = await fetch(GAS_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("sidori_token")}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          apiKey: GAS_API_KEY,
           fileBase64,
           fileName: file.name,
           mimeType: file.type,
-          areaId: id,
-          categoryId: uploadCategory,
-          uploadedBy: user.id,
+          irigationType: area?.irrigation_types?.name || "",
+          category: category?.name || "",
+          year: new Date().getFullYear().toString(),
         }),
       });
 
