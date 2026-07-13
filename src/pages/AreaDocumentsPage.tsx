@@ -61,6 +61,7 @@ export default function AreaDocumentsPage() {
   const [loading, setLoading] = useState(true);
   const [uploadPhase, setUploadPhase] = useState<"idle" | "uploading" | "done" | "error">("idle");
   const [uploadedUrl, setUploadedUrl] = useState("");
+  const [uploadedFileId, setUploadedFileId] = useState("");
   const [uploadCategory, setUploadCategory] = useState("");
   const [uploadYear, setUploadYear] = useState(CURRENT_YEAR.toString());
   const [searchQuery, setSearchQuery] = useState("");
@@ -118,9 +119,23 @@ export default function AreaDocumentsPage() {
   const removeDragFile = () => {
     setDragFile(null);
     setUploadedUrl("");
+    setUploadedFileId("");
     setUploadPhase("idle");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
+  const cancelUpload = useCallback(async () => {
+    if (uploadedFileId) {
+      try {
+        await fetch(GAS_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({ _method: "DELETE", apiKey: GAS_API_KEY, fileId: uploadedFileId }),
+        });
+      } catch { /* ignore */ }
+    }
+    removeDragFile();
+  }, [uploadedFileId]);
 
   const uploadFileToGAS = useCallback(async (file: File) => {
     if (!area) return;
@@ -152,6 +167,7 @@ export default function AreaDocumentsPage() {
         return;
       }
       setUploadedUrl(result.fileUrl);
+      setUploadedFileId(result.fileId);
       setUploadPhase("done");
     } catch (err) {
       alert("Upload ke Google Drive gagal: " + (err instanceof Error ? err.message : "unknown"));
@@ -218,7 +234,7 @@ export default function AreaDocumentsPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={(v) => { if (!v) cancelUpload(); setDialogOpen(v) }}>
           <DialogTrigger asChild>
             <Button>
               <Upload className="h-4 w-4 mr-2" /> Upload Dokumen
