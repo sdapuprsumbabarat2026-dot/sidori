@@ -1,10 +1,10 @@
 import { Button } from "../ui/button";
 import { ThemeToggle } from "./ThemeToggle";
-import { Menu, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { useNavigate } from "react-router-dom";
 
-export default function Navbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
+export default function Navbar() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
@@ -16,9 +16,6 @@ export default function Navbar({ onToggleSidebar }: { onToggleSidebar: () => voi
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-14 items-center px-4 gap-3">
-        <Button variant="ghost" size="icon" onClick={onToggleSidebar} className="md:hidden">
-          <Menu className="h-5 w-5" />
-        </Button>
         <div className="flex items-center gap-2 flex-1">
           <img src="/logo.png" alt="SIDORI" className="h-8 w-auto" />
           <span className="font-semibold text-lg">SIDORI</span>
