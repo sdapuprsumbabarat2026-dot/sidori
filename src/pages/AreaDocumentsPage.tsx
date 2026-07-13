@@ -63,6 +63,8 @@ export default function AreaDocumentsPage() {
   const [uploadedUrl, setUploadedUrl] = useState("");
   const [uploadedFileId, setUploadedFileId] = useState("");
   const [uploadCategory, setUploadCategory] = useState("");
+  const uploadCategoryRef = useRef(uploadCategory);
+  uploadCategoryRef.current = uploadCategory;
   const [uploadYear, setUploadYear] = useState(CURRENT_YEAR.toString());
   const [searchQuery, setSearchQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -145,7 +147,7 @@ export default function AreaDocumentsPage() {
       const bytes = new Uint8Array(buffer);
       const binary = bytes.reduce((acc, b) => acc + String.fromCharCode(b), "");
       const fileBase64 = btoa(binary);
-      const cat = categories.find((c) => c.id === uploadCategory);
+      const cat = categories.find((c) => c.id === uploadCategoryRef.current);
 
       const res = await fetch(GAS_URL, {
         method: "POST",
@@ -188,6 +190,7 @@ export default function AreaDocumentsPage() {
       category_id: uploadCategory,
       file_name: dragFile.name,
       file_url: uploadedUrl,
+      file_id: uploadedFileId,
       file_size: dragFile.size,
       year: parseInt(uploadYear),
       status: "review",
@@ -201,6 +204,15 @@ export default function AreaDocumentsPage() {
   };
 
   const handleDelete = async (doc: any) => {
+    if (doc.file_id) {
+      try {
+        await fetch(GAS_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({ _method: "DELETE", apiKey: GAS_API_KEY, fileId: doc.file_id }),
+        });
+      } catch { /* ignore */ }
+    }
     await supabase.rpc("admin_delete_document", { p_doc_id: doc.id });
     loadData();
   };
