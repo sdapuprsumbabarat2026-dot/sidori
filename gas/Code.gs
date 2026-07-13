@@ -58,6 +58,5 @@ function ensureFolder(name, parent) {
 
 function sendJson(data, status) {
   const output = ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON)
-  if (status) return ContentService.createTextOutput().setContent(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON)
   return output
 }

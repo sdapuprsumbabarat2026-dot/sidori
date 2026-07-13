@@ -128,7 +128,7 @@ export default function AreaDocumentsPage() {
 
       const res = await fetch(GAS_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "text/plain" },
         body: JSON.stringify({
           apiKey: GAS_API_KEY,
           fileBase64,
