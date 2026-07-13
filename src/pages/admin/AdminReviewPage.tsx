@@ -29,8 +29,8 @@ export default function AdminReviewPage() {
   useEffect(() => { loadDocs(); }, []);
 
   const handleReview = async (doc: any, status: "approved" | "rejected") => {
+    setMoving(doc.id);
     if (status === "approved" && doc.file_id) {
-      setMoving(doc.id);
       try {
         await fetch(GAS_URL, {
           method: "POST",
@@ -43,6 +43,15 @@ export default function AdminReviewPage() {
             irigationType: doc.irrigation_areas?.irrigation_types?.name || "",
             category: doc.document_categories?.name || "",
           }),
+        });
+      } catch { /* cleanup handled by admin */ }
+    }
+    if (status === "rejected" && doc.file_id) {
+      try {
+        await fetch(GAS_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({ _method: "DELETE", apiKey: GAS_API_KEY, fileId: doc.file_id }),
         });
       } catch { /* cleanup handled by admin */ }
     }
