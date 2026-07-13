@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { cn } from "../../lib/utils";
-import { LayoutDashboard, Droplets, Users, MapPin } from "lucide-react";
+import { LayoutDashboard, Droplets, Users, MapPin, FileCheck } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 
 const items = [
@@ -9,6 +9,7 @@ const items = [
 ];
 
 const adminItems = [
+  { to: "/admin/review", icon: FileCheck, label: "Review" },
   { to: "/admin/users", icon: Users, label: "Pengguna" },
   { to: "/admin/areas", icon: MapPin, label: "Area" },
 ];

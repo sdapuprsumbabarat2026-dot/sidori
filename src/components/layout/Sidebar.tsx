@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { cn } from "../../lib/utils";
-import { LayoutDashboard, Droplets, Users, MapPin } from "lucide-react";
+import { LayoutDashboard, Droplets, Users, MapPin, FileCheck } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { Button } from "../ui/button";
 import { X } from "lucide-react";
@@ -11,6 +11,7 @@ const navItems = [
 ];
 
 const adminItems = [
+  { to: "/admin/review", icon: FileCheck, label: "Review Dokumen" },
   { to: "/admin/users", icon: Users, label: "Pengguna" },
   { to: "/admin/areas", icon: MapPin, label: "Daerah Irigasi" },
 ];

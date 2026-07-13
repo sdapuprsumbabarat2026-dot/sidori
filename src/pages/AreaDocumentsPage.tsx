@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { Card, CardContent } from "../components/ui/card";
@@ -18,6 +18,8 @@ import { Loader2, Upload, Eye, FileText, Search } from "lucide-react";
 import type { IrrigationArea, DocumentCategory } from "../types";
 import { useAuthStore } from "../store/authStore";
 
+const EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-drive-upload`;
+
 export default function AreaDocumentsPage() {
   const { id } = useParams<{ id: string }>();
   const user = useAuthStore((s) => s.user);
@@ -28,6 +30,7 @@ export default function AreaDocumentsPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadCategory, setUploadCategory] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredDocs = searchQuery
     ? documents.filter(
@@ -53,43 +56,64 @@ export default function AreaDocumentsPage() {
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!uploadCategory || !id) return;
+    if (!uploadCategory || !id || !user) return;
+    const file = fileInputRef.current?.files?.[0];
+    if (!file) return;
+
     setUploading(true);
-    const fileInput = document.getElementById("file-upload") as HTMLInputElement;
-    if (!fileInput?.files?.[0]) {
+
+    try {
+      // Read file as base64
+      const buffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      const binary = bytes.reduce((acc, b) => acc + String.fromCharCode(b), "");
+      const fileBase64 = btoa(binary);
+
+      // Upload via Edge Function → Google Drive
+      const res = await fetch(EDGE_FUNCTION_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("sidori_token")}` },
+        body: JSON.stringify({
+          fileBase64,
+          fileName: file.name,
+          mimeType: file.type,
+          areaId: id,
+          categoryId: uploadCategory,
+          uploadedBy: user.id,
+        }),
+      });
+
+      const result = await res.json();
+      if (!result.success) {
+        alert("Upload gagal: " + (result.error || "unknown"));
+        setUploading(false);
+        return;
+      }
+
+      // Save document record with Google Drive URL
+      await supabase.from("documents").insert({
+        irrigation_area_id: id,
+        category_id: uploadCategory,
+        file_name: file.name,
+        file_url: result.fileUrl,
+        status: "review",
+        uploaded_by: user.id,
+      });
+
+      setUploadCategory("");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+
+      const { data: newDocs } = await supabase
+        .from("documents")
+        .select("*, document_categories(name)")
+        .eq("irrigation_area_id", id)
+        .order("created_at", { ascending: false });
+      if (newDocs) setDocuments(newDocs);
+    } catch (err) {
+      alert("Upload gagal: " + (err instanceof Error ? err.message : "unknown"));
+    } finally {
       setUploading(false);
-      return;
     }
-    const file = fileInput.files[0];
-
-    const { data: uploadData, error: uploadError } = await supabase.storage.from("documents").upload(`${id}/${Date.now()}_${file.name}`, file);
-    if (uploadError || !uploadData) {
-      alert("Upload gagal: " + (uploadError?.message || "unknown"));
-      setUploading(false);
-      return;
-    }
-
-    const { data: urlData } = supabase.storage.from("documents").getPublicUrl(uploadData.path);
-
-    await supabase.from("documents").insert({
-      irrigation_area_id: id,
-      category_id: uploadCategory,
-      file_name: file.name,
-      file_url: urlData?.publicUrl || "",
-      status: "review",
-      uploaded_by: user?.id,
-    });
-
-    setUploading(false);
-    setUploadCategory("");
-    if (fileInput) fileInput.value = "";
-
-    const { data: newDocs } = await supabase
-      .from("documents")
-      .select("*, document_categories(name)")
-      .eq("irrigation_area_id", id)
-      .order("created_at", { ascending: false });
-    if (newDocs) setDocuments(newDocs);
   };
 
   if (loading) {
@@ -107,7 +131,7 @@ export default function AreaDocumentsPage() {
         <p className="text-muted-foreground">{area?.irrigation_types?.name}</p>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Cari dokumen..." className="pl-10" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
@@ -124,12 +148,12 @@ export default function AreaDocumentsPage() {
             </DialogHeader>
             <form onSubmit={handleUpload} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="doc-category">Kategori</Label>
+                <Label>Kategori</Label>
                 <Select value={uploadCategory} onValueChange={setUploadCategory} required>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-background">
                     <SelectValue placeholder="Pilih kategori" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-popover border shadow-lg z-[100]">
                     {categories.map((c) => (
                       <SelectItem key={c.id} value={c.id}>
                         {c.name}
@@ -139,12 +163,12 @@ export default function AreaDocumentsPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="file-upload">File</Label>
-                <Input id="file-upload" type="file" required />
+                <Label>File</Label>
+                <Input ref={fileInputRef} type="file" required className="cursor-pointer" />
               </div>
               <Button type="submit" disabled={uploading} className="w-full">
                 {uploading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                {uploading ? "Mengupload..." : "Upload"}
+                {uploading ? "Mengupload ke Google Drive..." : "Upload"}
               </Button>
             </form>
           </DialogContent>
