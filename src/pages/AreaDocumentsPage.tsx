@@ -27,7 +27,7 @@ import {
 import { StatusBadge } from "../components/StatusBadge";
 import {
   Loader2, Upload, Eye, FileText, Search, Trash2,
-  Calendar, HardDrive, Clock
+  Calendar, HardDrive, Clock, Check
 } from "lucide-react";
 import type { IrrigationArea, DocumentCategory } from "../types";
 import { useAuthStore } from "../store/authStore";
@@ -59,7 +59,8 @@ export default function AreaDocumentsPage() {
   const [categories, setCategories] = useState<DocumentCategory[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
+  const [uploadPhase, setUploadPhase] = useState<"idle" | "uploading" | "done" | "error">("idle");
+  const [uploadedUrl, setUploadedUrl] = useState("");
   const [uploadCategory, setUploadCategory] = useState("");
   const [uploadYear, setUploadYear] = useState(CURRENT_YEAR.toString());
   const [searchQuery, setSearchQuery] = useState("");
@@ -116,23 +117,19 @@ export default function AreaDocumentsPage() {
 
   const removeDragFile = () => {
     setDragFile(null);
+    setUploadedUrl("");
+    setUploadPhase("idle");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!uploadCategory || !id || !user || !dragFile) return;
-    if (dragFile.size > MAX_FILE_SIZE) {
-      alert("File terlalu besar. Maksimal 15 MB.");
-      return;
-    }
-    setUploading(true);
+  const uploadFileToGAS = useCallback(async (file: File) => {
+    if (!area) return;
+    setUploadPhase("uploading");
     try {
-      const buffer = await dragFile.arrayBuffer();
+      const buffer = await file.arrayBuffer();
       const bytes = new Uint8Array(buffer);
       const binary = bytes.reduce((acc, b) => acc + String.fromCharCode(b), "");
       const fileBase64 = btoa(binary);
-      const category = categories.find((c) => c.id === uploadCategory);
 
       const res = await fetch(GAS_URL, {
         method: "POST",
@@ -140,42 +137,50 @@ export default function AreaDocumentsPage() {
         body: JSON.stringify({
           apiKey: GAS_API_KEY,
           fileBase64,
-          fileName: dragFile.name,
-          mimeType: dragFile.type,
-          irigationType: area?.irrigation_types?.name || "",
-          category: category?.name || "",
+          fileName: file.name,
+          mimeType: file.type,
+          irigationType: area.irrigation_types?.name || "",
+          category: "",
           year: uploadYear,
         }),
       });
 
       const result = await res.json();
       if (!result.success) {
-        alert("Upload gagal: " + (result.error || "unknown"));
-        setUploading(false);
+        alert("Upload ke Google Drive gagal: " + (result.error || "unknown"));
+        setUploadPhase("error");
         return;
       }
-
-      await supabase.from("documents").insert({
-        irrigation_area_id: id,
-        category_id: uploadCategory,
-        file_name: dragFile.name,
-        file_url: result.fileUrl,
-        file_size: dragFile.size,
-        year: parseInt(uploadYear),
-        status: "review",
-        uploaded_by: user.id,
-      });
-
-      removeDragFile();
-      setUploadCategory("");
-      setUploadYear(CURRENT_YEAR.toString());
-      setDialogOpen(false);
-      loadData();
+      setUploadedUrl(result.fileUrl);
+      setUploadPhase("done");
     } catch (err) {
-      alert("Upload gagal: " + (err instanceof Error ? err.message : "unknown"));
-    } finally {
-      setUploading(false);
+      alert("Upload ke Google Drive gagal: " + (err instanceof Error ? err.message : "unknown"));
+      setUploadPhase("error");
     }
+  }, [area, uploadYear]);
+
+  useEffect(() => {
+    if (dragFile && uploadPhase === "idle") uploadFileToGAS(dragFile);
+  }, [dragFile, uploadFileToGAS, uploadPhase]);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadCategory || !id || !user || !dragFile || !uploadedUrl) return;
+    await supabase.from("documents").insert({
+      irrigation_area_id: id,
+      category_id: uploadCategory,
+      file_name: dragFile.name,
+      file_url: uploadedUrl,
+      file_size: dragFile.size,
+      year: parseInt(uploadYear),
+      status: "review",
+      uploaded_by: user.id,
+    });
+    removeDragFile();
+    setUploadCategory("");
+    setUploadYear(CURRENT_YEAR.toString());
+    setDialogOpen(false);
+    loadData();
   };
 
   const handleDelete = async (doc: any) => {
@@ -223,7 +228,7 @@ export default function AreaDocumentsPage() {
             <DialogHeader>
               <DialogTitle>Upload Dokumen</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleUpload} className="space-y-5">
+            <form onSubmit={handleSave} className="space-y-5">
               <div className="space-y-2">
                 <Label>Kategori</Label>
                 <Select value={uploadCategory} onValueChange={setUploadCategory} required>
@@ -254,7 +259,30 @@ export default function AreaDocumentsPage() {
 
               <div className="space-y-2">
                 <Label>File</Label>
-                {dragFile ? (
+                {uploadPhase === "done" ? (
+                  <div className="border rounded-lg p-4 bg-muted/30">
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-full bg-green-100 dark:bg-green-900 p-1.5">
+                        <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium truncate">{dragFile!.name}</p>
+                        <p className="text-xs text-muted-foreground">{formatSize(dragFile!.size)} &middot; Tersimpan di Google Drive</p>
+                      </div>
+                      <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={removeDragFile}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : uploadPhase === "uploading" ? (
+                  <div className="border rounded-lg p-6 text-center bg-muted/30">
+                    <Loader2 className="h-8 w-8 mx-auto mb-3 animate-spin text-primary" />
+                    <p className="text-sm font-medium">Mengupload ke Google Drive...</p>
+                    <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-primary rounded-full animate-pulse" style={{ width: "60%" }} />
+                    </div>
+                  </div>
+                ) : dragFile ? (
                   <div className="relative border rounded-lg p-4 bg-muted/30">
                     <div className="flex items-center gap-3">
                       <FileText className="h-8 w-8 text-primary shrink-0" />
@@ -285,10 +313,15 @@ export default function AreaDocumentsPage() {
                 )}
               </div>
 
-              <Button type="submit" disabled={uploading || !dragFile} className="w-full">
-                {uploading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                {uploading ? "Mengupload ke Google Drive..." : "Upload"}
-              </Button>
+              {uploadPhase === "done" ? (
+                <Button type="submit" disabled={!uploadCategory} className="w-full">
+                  <Check className="h-4 w-4 mr-2" /> Simpan Dokumen
+                </Button>
+              ) : (
+                <Button type="submit" disabled className="w-full">
+                  {uploadPhase === "uploading" ? "Mengupload..." : "Pilih file terlebih dahulu"}
+                </Button>
+              )}
             </form>
           </DialogContent>
         </Dialog>
