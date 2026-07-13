@@ -37,6 +37,8 @@ const GAS_API_KEY = import.meta.env.VITE_GAS_API_KEY;
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: 16 }, (_, i) => CURRENT_YEAR - 5 + i);
 
+const MAX_FILE_SIZE = 15 * 1024 * 1024;
+
 function formatSize(bytes: number) {
   if (!bytes) return "-";
   const units = ["B", "KB", "MB", "GB"];
@@ -102,11 +104,13 @@ export default function AreaDocumentsPage() {
     e.preventDefault();
     setDragOver(false);
     const f = e.dataTransfer.files?.[0];
+    if (f && f.size > MAX_FILE_SIZE) { alert("File terlalu besar. Maksimal 15 MB."); return; }
     if (f) setDragFile(f);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
+    if (f && f.size > MAX_FILE_SIZE) { alert("File terlalu besar. Maksimal 15 MB."); return; }
     if (f) { setDragFile(f); setDragOver(false) }
   };
 
@@ -118,6 +122,10 @@ export default function AreaDocumentsPage() {
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadCategory || !id || !user || !dragFile) return;
+    if (dragFile.size > MAX_FILE_SIZE) {
+      alert("File terlalu besar. Maksimal 15 MB.");
+      return;
+    }
     setUploading(true);
     try {
       const buffer = await dragFile.arrayBuffer();
@@ -271,7 +279,7 @@ export default function AreaDocumentsPage() {
                   >
                     <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                     <p className="text-sm font-medium">Seret file ke sini atau klik untuk pilih</p>
-                    <p className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG, DOC, XLS — Maks 10MB</p>
+                    <p className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG, DOC, XLS — Maks 15MB</p>
                     <Input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} />
                   </div>
                 )}
