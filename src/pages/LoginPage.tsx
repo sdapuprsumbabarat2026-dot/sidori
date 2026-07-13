@@ -8,7 +8,7 @@ import { Label } from "../components/ui/label";
 import { AlertCircle, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [nip, setNip] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -24,7 +24,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setSubmitting(true);
-    const err = await login(email, password);
+    const err = await login(nip, password);
     setSubmitting(false);
     if (err) setError(err);
     else navigate("/", { replace: true });
@@ -44,8 +44,8 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="text" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="user@email.com" />
+              <Label htmlFor="nip">NIP</Label>
+              <Input id="nip" type="text" value={nip} onChange={(e) => setNip(e.target.value)} required placeholder="Nomor Induk Pegawai" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>

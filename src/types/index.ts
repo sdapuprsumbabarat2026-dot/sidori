@@ -1,6 +1,6 @@
 export interface User {
   id: string;
-  email: string;
+  nip: string;
   name: string;
   role: "super_admin" | "user";
   created_at: string;

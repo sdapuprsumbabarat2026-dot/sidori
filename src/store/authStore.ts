@@ -6,7 +6,7 @@ interface AuthState {
   user: User | null;
   token: string | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<string | null>;
+  login: (nip: string, password: string) => Promise<string | null>;
   logout: () => Promise<void>;
   checkSession: () => Promise<void>;
 }
@@ -16,9 +16,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   token: localStorage.getItem("sidori_token"),
   loading: !!localStorage.getItem("sidori_token"),
 
-  login: async (email, password) => {
+  login: async (nip, password) => {
     const { data, error } = await supabase.rpc("auth_login", {
-      p_email: email,
+      p_nip: nip,
       p_password: password,
     });
 

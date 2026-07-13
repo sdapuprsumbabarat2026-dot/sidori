@@ -12,17 +12,24 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../../components/ui/dialog";
-import { UserPlus, Loader2, Trash2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
+import { UserPlus, Loader2, Trash2, Pencil, KeyRound } from "lucide-react";
 import type { User } from "../../types";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState("user");
   const [submitting, setSubmitting] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editUser, setEditUser] = useState<User | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [formNip, setFormNip] = useState("");
+  const [formName, setFormName] = useState("");
+  const [formPassword, setFormPassword] = useState("");
+  const [formRole, setFormRole] = useState("user");
+  const [editName, setEditName] = useState("");
+  const [editRole, setEditRole] = useState("user");
+  const [newPassword, setNewPassword] = useState("");
 
   const loadUsers = async () => {
     const { data } = await supabase.rpc("admin_list_users");
@@ -32,12 +39,36 @@ export default function AdminUsersPage() {
 
   useEffect(() => { loadUsers(); }, []);
 
+  const resetForm = () => { setFormNip(""); setFormName(""); setFormPassword(""); setFormRole("user") };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    await supabase.rpc("admin_create_user", { p_email: email, p_name: name, p_password: password, p_role: role });
+    await supabase.rpc("admin_create_user", { p_nip: formNip, p_name: formName, p_password: formPassword, p_role: formRole });
     setSubmitting(false);
-    setEmail(""); setName(""); setPassword(""); setRole("user");
+    resetForm();
+    setCreateOpen(false);
+    loadUsers();
+  };
+
+  const openEdit = (u: User) => {
+    setEditUser(u);
+    setEditName(u.name);
+    setEditRole(u.role);
+    setNewPassword("");
+    setEditOpen(true);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editUser) return;
+    setSubmitting(true);
+    await supabase.rpc("admin_update_user", { p_user_id: editUser.id, p_name: editName, p_role: editRole });
+    if (newPassword) {
+      await supabase.rpc("admin_change_password", { p_user_id: editUser.id, p_new_password: newPassword });
+    }
+    setSubmitting(false);
+    setEditOpen(false);
     loadUsers();
   };
 
@@ -54,7 +85,7 @@ export default function AdminUsersPage() {
           <h1 className="text-2xl font-bold tracking-tight">Pengguna</h1>
           <p className="text-muted-foreground">Kelola pengguna sistem.</p>
         </div>
-        <Dialog>
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
             <Button>
               <UserPlus className="h-4 w-4 mr-2" /> Tambah
@@ -66,23 +97,21 @@ export default function AdminUsersPage() {
             </DialogHeader>
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="space-y-2">
-                <Label>Email</Label>
-                <Input value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <Label>NIP</Label>
+                <Input value={formNip} onChange={(e) => setFormNip(e.target.value)} required placeholder="Nomor Induk Pegawai" />
               </div>
               <div className="space-y-2">
                 <Label>Nama</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} required />
+                <Input value={formName} onChange={(e) => setFormName(e.target.value)} required />
               </div>
               <div className="space-y-2">
                 <Label>Password</Label>
-                <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <Input type="password" value={formPassword} onChange={(e) => setFormPassword(e.target.value)} required />
               </div>
               <div className="space-y-2">
                 <Label>Role</Label>
-                <Select value={role} onValueChange={setRole}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                <Select value={formRole} onValueChange={setFormRole}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="user">User</SelectItem>
                     <SelectItem value="super_admin">Super Admin</SelectItem>
@@ -114,10 +143,10 @@ export default function AdminUsersPage() {
                     </div>
                     <div>
                       <p className="font-medium">{u.name}</p>
-                      <p className="text-sm text-muted-foreground">{u.email}</p>
+                      <p className="text-sm text-muted-foreground">{u.nip}</p>
                     </div>
                   </div>
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       u.role === "super_admin"
                         ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400"
@@ -125,8 +154,11 @@ export default function AdminUsersPage() {
                     }`}>
                       {u.role === "super_admin" ? "Super Admin" : "User"}
                     </span>
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(u)} title="Edit">
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                     {u.role !== "super_admin" && (
-                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(u.id)}>
+                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(u.id)} title="Hapus">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     )}
@@ -137,6 +169,58 @@ export default function AdminUsersPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Pengguna</DialogTitle>
+          </DialogHeader>
+          {editUser && (
+            <Tabs defaultValue="data">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="data"><Pencil className="h-4 w-4 mr-2" />Data</TabsTrigger>
+                <TabsTrigger value="password"><KeyRound className="h-4 w-4 mr-2" />Password</TabsTrigger>
+              </TabsList>
+              <form onSubmit={handleUpdate}>
+                <TabsContent value="data" className="space-y-4 mt-4">
+                  <div className="space-y-2">
+                    <Label>NIP</Label>
+                    <Input value={editUser.nip} disabled className="bg-muted" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Nama</Label>
+                    <Input value={editName} onChange={(e) => setEditName(e.target.value)} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Role</Label>
+                    <Select value={editRole} onValueChange={setEditRole}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="user">User</SelectItem>
+                        <SelectItem value="super_admin">Super Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button type="submit" disabled={submitting} className="w-full">
+                    {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                    Simpan Perubahan
+                  </Button>
+                </TabsContent>
+                <TabsContent value="password" className="space-y-4 mt-4">
+                  <div className="space-y-2">
+                    <Label>Password Baru</Label>
+                    <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required placeholder="Minimal 6 karakter" minLength={6} />
+                  </div>
+                  <Button type="submit" disabled={submitting} className="w-full">
+                    {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                    Ubah Password
+                  </Button>
+                </TabsContent>
+              </form>
+            </Tabs>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
