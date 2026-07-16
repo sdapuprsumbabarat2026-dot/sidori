@@ -11,6 +11,7 @@ import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminAreasPage from "./pages/admin/AdminAreasPage";
 import AdminReviewPage from "./pages/admin/AdminReviewPage";
 import UsulanPage from "./pages/UsulanPage";
+import RiwayatPage from "./pages/RiwayatPage";
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
             <Route path="irigasi" element={<IrrigationTypesPage />} />
             <Route path="irigasi/:typeId/areas" element={<IrrigationAreasPage />} />
             <Route path="area/:id" element={<AreaDocumentsPage />} />
+            <Route path="riwayat" element={<RiwayatPage />} />
             <Route path="admin/users" element={<ProtectedRoute adminOnly><AdminUsersPage /></ProtectedRoute>} />
             <Route path="admin/areas" element={<ProtectedRoute adminOnly><AdminAreasPage /></ProtectedRoute>} />
             <Route path="admin/review" element={<ProtectedRoute adminOnly><AdminReviewPage /></ProtectedRoute>} />

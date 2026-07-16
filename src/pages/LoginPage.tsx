@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
 import { Label } from "../components/ui/label";
 import { AlertCircle, Loader2 } from "lucide-react";
 
@@ -31,38 +30,92 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 relative">
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-transparent to-green-50 dark:from-blue-950/20 dark:to-green-950/20" />
-      <Card className="relative w-full max-w-sm">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-3">
-            <img src="/logo.png" alt="SIDORI" className="h-16 w-auto" />
+    <div className="min-h-screen flex items-center justify-center p-4 md:p-8 bg-slate-100">
+      <div className="w-full max-w-6xl min-h-[640px] rounded-2xl overflow-hidden shadow-2xl grid md:grid-cols-2 bg-white">
+        {/* Panel kiri: identitas instansi dengan foto latar */}
+        <div className="relative hidden md:flex flex-col justify-between p-10 text-white overflow-hidden">
+          <img
+            src="/login-bg.jpeg"
+            alt="Irigasi Sumba Barat"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          {/* overlay gradasi supaya teks tetap terbaca */}
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-950/80 via-blue-950/50 to-blue-950/85" />
+
+          <div className="relative flex items-center gap-3">
+            <img src="/logo-kabupaten.png" alt="Logo Kabupaten Sumba Barat" className="h-14 w-auto drop-shadow" />
+            <img src="/logo-pupr.png" alt="Logo PUPR" className="h-14 w-auto drop-shadow" />
           </div>
-          <CardTitle className="text-xl">SIDORI</CardTitle>
-          <CardDescription>Sistem Inventarisasi Dokumen Perencanaan Irigasi</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+
+          <div className="relative space-y-3 mt-10">
+            <p className="text-xs font-medium tracking-wide text-blue-100">
+              Kabupaten Sumba Barat
+              <br />
+              Dinas Pekerjaan Umum dan Penataan Ruang
+              <br />
+              Bidang Sumber Daya Air
+            </p>
+            <h1 className="text-4xl font-bold tracking-tight pt-2">SIDORI</h1>
+            <p className="text-blue-100 leading-relaxed max-w-sm">
+              Sistem Informasi Dokumen Perencanaan Irigasi — mengawal proses pengusulan dan
+              perencanaan konstruksi jaringan irigasi.
+            </p>
+          </div>
+
+          <div className="relative text-[11px] text-blue-200/80">
+            &copy; {new Date().getFullYear()} Bidang Sumber Daya Air, DPUPR Kabupaten Sumba Barat
+          </div>
+        </div>
+
+        {/* Panel kanan: form login */}
+        <div className="p-8 md:p-14 flex flex-col justify-center bg-white">
+          <div className="flex md:hidden items-center justify-center gap-4 mb-6">
+            <img src="/logo-kabupaten.png" alt="Logo Kabupaten Sumba Barat" className="h-12 w-auto" />
+            <img src="/logo-pupr.png" alt="Logo PUPR" className="h-12 w-auto" />
+          </div>
+
+          <div className="mb-8 text-center md:text-left">
+            <h2 className="text-3xl font-bold text-slate-800">Selamat Datang</h2>
+            <p className="text-sm text-muted-foreground mt-1">Silakan masuk ke akun SIDORI Anda</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5 max-w-sm mx-auto md:mx-0 w-full">
             <div className="space-y-2">
-              <Label htmlFor="nip">NIP</Label>
-              <Input id="nip" type="text" value={nip} onChange={(e) => setNip(e.target.value)} required placeholder="Nomor Induk Pegawai" />
+              <Label htmlFor="nip" className="text-slate-700">NIP</Label>
+              <Input
+                id="nip"
+                type="text"
+                value={nip}
+                onChange={(e) => setNip(e.target.value)}
+                required
+                placeholder="Nomor Induk Pegawai"
+                className="h-11 bg-white text-slate-900 placeholder:text-slate-400 border-slate-300"
+              />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="••••••••" />
+              <Label htmlFor="password" className="text-slate-700">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                className="h-11 bg-white text-slate-900 placeholder:text-slate-400 border-slate-300"
+              />
             </div>
             {error && (
               <div className="flex items-center gap-2 text-sm text-destructive">
                 <AlertCircle className="h-4 w-4" /> {error}
               </div>
             )}
-            <Button type="submit" className="w-full" disabled={submitting}>
+            <Button type="submit" className="w-full h-11" disabled={submitting}>
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
               {submitting ? "Memuat..." : "Masuk"}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

@@ -27,7 +27,7 @@ import {
 import { StatusBadge } from "../components/StatusBadge";
 import {
   Loader2, Upload, Eye, FileText, Search, Trash2,
-  Calendar, HardDrive, Clock, Check
+  Calendar, HardDrive, Clock, Check, User
 } from "lucide-react";
 import type { IrrigationArea, DocumentCategory } from "../types";
 import { useAuthStore } from "../store/authStore";
@@ -52,6 +52,68 @@ function formatDate(ts: string) {
   return new Date(ts).toLocaleDateString("id-ID", { year: "numeric", month: "short", day: "numeric" });
 }
 
+// Kompresi gambar di sisi browser sebelum upload.
+// - JPG/WebP: resize maks 1920px + kualitas JPEG 75% (ukuran turun drastis)
+// - PNG: dipertahankan sebagai PNG (tidak dikonversi ke JPG) supaya transparansi tidak hilang,
+//   hanya di-resize dimensinya kalau melebihi 1920px. PNG lossless jadi penurunan ukurannya
+//   tidak sebesar JPG, tapi tetap membantu untuk screenshot/gambar beresolusi besar.
+async function compressImageIfNeeded(file: File): Promise<File> {
+  if (!file.type.startsWith("image/") || file.type === "image/svg+xml") return file;
+
+  const isPng = file.type === "image/png";
+  const MAX_DIMENSION = 1920;
+  const QUALITY = 0.75;
+
+  const imgUrl = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = reject;
+      el.src = imgUrl;
+    });
+
+    let { width, height } = img;
+    const needsResize = width > MAX_DIMENSION || height > MAX_DIMENSION;
+    if (!needsResize && isPng) return file; // PNG kecil, tidak perlu diapa-apakan
+
+    if (needsResize) {
+      if (width > height) {
+        height = Math.round((height * MAX_DIMENSION) / width);
+        width = MAX_DIMENSION;
+      } else {
+        width = Math.round((width * MAX_DIMENSION) / height);
+        height = MAX_DIMENSION;
+      }
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+    ctx.drawImage(img, 0, 0, width, height);
+
+    const outputType = isPng ? "image/png" : "image/jpeg";
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, outputType, isPng ? undefined : QUALITY)
+    );
+    if (!blob) return file;
+
+    // Kalau hasil kompresi malah lebih besar (jarang, biasanya file kecil), pakai file asli
+    if (blob.size >= file.size) return file;
+
+    const newName = isPng
+      ? file.name
+      : file.name.replace(/\.(png|jpe?g|webp)$/i, "") + ".jpg";
+    return new File([blob], newName, { type: outputType, lastModified: Date.now() });
+  } catch {
+    return file;
+  } finally {
+    URL.revokeObjectURL(imgUrl);
+  }
+}
+
 export default function AreaDocumentsPage() {
   const { id } = useParams<{ id: string }>();
   const user = useAuthStore((s) => s.user);
@@ -62,6 +124,7 @@ export default function AreaDocumentsPage() {
   const [uploadPhase, setUploadPhase] = useState<"idle" | "uploading" | "done" | "error">("idle");
   const [uploadedUrl, setUploadedUrl] = useState("");
   const [uploadedFileId, setUploadedFileId] = useState("");
+  const [compressedFile, setCompressedFile] = useState<File | null>(null);
   const [uploadCategory, setUploadCategory] = useState("");
   const uploadCategoryRef = useRef(uploadCategory);
   uploadCategoryRef.current = uploadCategory;
@@ -85,18 +148,28 @@ export default function AreaDocumentsPage() {
       )
     : documents;
 
-  const loadData = useCallback(() => {
+  const loadData = useCallback(async () => {
     if (!id) return;
-    Promise.all([
-      supabase.from("irrigation_areas").select("*, irrigation_types(name)").eq("id", id).maybeSingle().then(({ data }) => setArea(data as any)),
-      supabase.from("document_categories").select("*").order("sort_order").then(({ data }) => setCategories(data || [])),
+    const { data: areaData } = await supabase.from("irrigation_areas").select("*, irrigation_types(name)").eq("id", id).maybeSingle();
+    setArea(areaData as any);
+
+    let catQuery = supabase.from("document_categories").select("*").order("sort_order");
+    if (areaData?.menu_kegiatan) {
+      catQuery = catQuery.eq("menu_kegiatan", areaData.menu_kegiatan);
+    } else {
+      catQuery = catQuery.is("menu_kegiatan", null);
+    }
+    const [catRes, docRes] = await Promise.all([
+      catQuery,
       supabase
         .from("documents")
-        .select("*, document_categories(name)")
+        .select("*, document_categories(name), uploader:users!documents_uploaded_by_fkey(name)")
         .eq("irrigation_area_id", id)
-        .order("created_at", { ascending: false })
-        .then(({ data }) => setDocuments(data || [])),
-    ]).finally(() => setLoading(false));
+        .order("created_at", { ascending: false }),
+    ]);
+    setCategories(catRes.data || []);
+    setDocuments(docRes.data || []);
+    setLoading(false);
   }, [id]);
 
   useEffect(() => { loadData() }, [loadData]);
@@ -132,6 +205,7 @@ export default function AreaDocumentsPage() {
 
   const removeDragFile = () => {
     setDragFile(null);
+    setCompressedFile(null);
     setUploadedUrl("");
     setUploadedFileId("");
     setUploadPhase("idle");
@@ -155,11 +229,14 @@ export default function AreaDocumentsPage() {
     if (!area) return;
     setUploadPhase("uploading");
     try {
+      const toUpload = await compressImageIfNeeded(file);
+      setCompressedFile(toUpload);
+
       const fileBase64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve((reader.result as string).split(",")[1]);
         reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(toUpload);
       });
       const cat = categories.find((c) => c.id === uploadCategoryRef.current);
 
@@ -172,8 +249,8 @@ export default function AreaDocumentsPage() {
         body: JSON.stringify({
           apiKey: GAS_API_KEY,
           fileBase64,
-          fileName: file.name,
-          mimeType: file.type,
+          fileName: toUpload.name,
+          mimeType: toUpload.type,
           irigationType: area.irrigation_types?.name || "",
           category: cat?.name || "",
           year: uploadYear,
@@ -208,13 +285,21 @@ export default function AreaDocumentsPage() {
     await supabase.from("documents").insert({
       irrigation_area_id: id,
       category_id: uploadCategory,
-      file_name: dragFile.name,
+      file_name: (compressedFile || dragFile).name,
       file_url: uploadedUrl,
       file_id: uploadedFileId,
-      file_size: dragFile.size,
+      file_size: (compressedFile || dragFile).size,
       year: parseInt(uploadYear),
       status: "review",
       uploaded_by: user.id,
+    });
+    const catName = categories.find((c) => c.id === uploadCategory)?.name;
+    await supabase.from("document_activity_log").insert({
+      irrigation_area_id: id,
+      file_name: (compressedFile || dragFile).name,
+      category_name: catName,
+      action: "upload",
+      performed_by: user.id,
     });
     removeDragFile();
     setUploadCategory("");
@@ -233,6 +318,13 @@ export default function AreaDocumentsPage() {
         });
       } catch { /* ignore */ }
     }
+    await supabase.from("document_activity_log").insert({
+      irrigation_area_id: id,
+      file_name: doc.file_name,
+      category_name: doc.document_categories?.name,
+      action: "delete",
+      performed_by: user?.id,
+    });
     await supabase.rpc("admin_delete_document", { p_doc_id: doc.id });
     loadData();
   };
@@ -316,8 +408,15 @@ export default function AreaDocumentsPage() {
                           <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="font-medium truncate">{dragFile!.name}</p>
-                          <p className="text-xs text-muted-foreground">{formatSize(dragFile!.size)} &middot; Tersimpan di Google Drive</p>
+                          <p className="font-medium truncate">{(compressedFile || dragFile)!.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatSize((compressedFile || dragFile)!.size)} &middot; Tersimpan di Google Drive
+                            {compressedFile && dragFile && compressedFile.size < dragFile.size && (
+                              <span className="text-green-600 dark:text-green-400">
+                                {" "}(dikompres dari {formatSize(dragFile.size)}, hemat {Math.round((1 - compressedFile.size / dragFile.size) * 100)}%)
+                              </span>
+                            )}
+                          </p>
                         </div>
                         <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={removeDragFile}>
                           <Trash2 className="h-4 w-4" />
@@ -327,7 +426,9 @@ export default function AreaDocumentsPage() {
                   ) : uploadPhase === "uploading" ? (
                     <div className="border rounded-lg p-6 text-center bg-muted/30">
                       <Loader2 className="h-8 w-8 mx-auto mb-3 animate-spin text-primary" />
-                      <p className="text-sm font-medium">Mengupload ke Google Drive...</p>
+                      <p className="text-sm font-medium">
+                        {dragFile?.type.startsWith("image/") ? "Mengompres & mengupload..." : "Mengupload ke Google Drive..."}
+                      </p>
                       <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
                         <div className="h-full bg-primary rounded-full animate-pulse" style={{ width: "60%" }} />
                       </div>
@@ -370,7 +471,7 @@ export default function AreaDocumentsPage() {
                     >
                       <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                       <p className="text-sm font-medium">Seret file ke sini atau klik untuk pilih</p>
-                      <p className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG, DOC, XLS — Maks 15MB</p>
+                      <p className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG, DOC, XLS — Maks 15MB (gambar otomatis dikompres)</p>
                       <Input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} />
                     </div>
                   )}
@@ -435,6 +536,11 @@ export default function AreaDocumentsPage() {
                       <span className="flex items-center gap-1">
                         <HardDrive className="h-3 w-3" /> {formatSize(doc.file_size)}
                       </span>
+                      {doc.uploader?.name && (
+                        <span className="flex items-center gap-1">
+                          <User className="h-3 w-3" /> Diupload oleh {doc.uploader.name}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">

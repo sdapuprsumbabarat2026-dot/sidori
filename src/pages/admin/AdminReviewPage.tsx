@@ -19,7 +19,7 @@ export default function AdminReviewPage() {
   const loadDocs = async () => {
     const { data } = await supabase
       .from("documents")
-      .select("*, irrigation_areas!inner(name, irrigation_types!inner(name)), document_categories(name)")
+      .select("*, irrigation_areas!inner(name, irrigation_types!inner(name)), document_categories(name), uploader:users!documents_uploaded_by_fkey(name)")
       .eq("status", "review")
       .order("created_at", { ascending: false });
     if (data) setDocs(data);
@@ -56,6 +56,13 @@ export default function AdminReviewPage() {
       } catch { /* cleanup handled by admin */ }
     }
     await supabase.rpc("admin_review_document", { p_doc_id: doc.id, p_status: status, p_reviewed_by: user?.id });
+    await supabase.from("document_activity_log").insert({
+      irrigation_area_id: doc.irrigation_area_id,
+      file_name: doc.file_name,
+      category_name: doc.document_categories?.name,
+      action: status, // 'approved' | 'rejected'
+      performed_by: user?.id,
+    });
     setMoving(null);
     loadDocs();
   };
@@ -99,6 +106,9 @@ export default function AdminReviewPage() {
                     <p className="text-xs text-muted-foreground">
                       {doc.irrigation_areas?.name} &middot; {doc.document_categories?.name}
                     </p>
+                    {doc.uploader?.name && (
+                      <p className="text-xs text-muted-foreground">Diupload oleh {doc.uploader.name}</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <Button variant="outline" size="sm" asChild>
@@ -107,10 +117,10 @@ export default function AdminReviewPage() {
                       </a>
                     </Button>
                     <Button variant="outline" size="sm" className="text-green-600" disabled={moving === doc.id} onClick={() => handleReview(doc, "approved")}>
-                      {moving === doc.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-1" />} Setujui
+                      {moving === doc.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-1" />} Sesuai
                     </Button>
                     <Button variant="outline" size="sm" className="text-red-600" disabled={moving === doc.id} onClick={() => handleReview(doc, "rejected")}>
-                      <XCircle className="h-4 w-4 mr-1" /> Tolak
+                      <XCircle className="h-4 w-4 mr-1" /> Tidak Sesuai
                     </Button>
                   </div>
                 </div>

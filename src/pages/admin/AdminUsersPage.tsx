@@ -13,7 +13,7 @@ import {
   DialogTrigger,
 } from "../../components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
-import { UserPlus, Loader2, Trash2, Pencil, KeyRound } from "lucide-react";
+import { UserPlus, Loader2, Trash2, Pencil, KeyRound, History, FileText } from "lucide-react";
 import type { User } from "../../types";
 
 export default function AdminUsersPage() {
@@ -30,6 +30,8 @@ export default function AdminUsersPage() {
   const [editName, setEditName] = useState("");
   const [editRole, setEditRole] = useState("user");
   const [newPassword, setNewPassword] = useState("");
+  const [history, setHistory] = useState<any[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   const loadUsers = async () => {
     const { data } = await supabase.rpc("admin_list_users");
@@ -56,6 +58,12 @@ export default function AdminUsersPage() {
     setEditName(u.name);
     setEditRole(u.role);
     setNewPassword("");
+    setHistory([]);
+    setHistoryLoading(true);
+    supabase.rpc("admin_user_area_history", { p_user_id: u.id }).then(({ data }) => {
+      setHistory(data || []);
+      setHistoryLoading(false);
+    });
     setEditOpen(true);
   };
 
@@ -177,9 +185,10 @@ export default function AdminUsersPage() {
           </DialogHeader>
           {editUser && (
             <Tabs defaultValue="data">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="data"><Pencil className="h-4 w-4 mr-2" />Data</TabsTrigger>
                 <TabsTrigger value="password"><KeyRound className="h-4 w-4 mr-2" />Password</TabsTrigger>
+                <TabsTrigger value="riwayat"><History className="h-4 w-4 mr-2" />Riwayat</TabsTrigger>
               </TabsList>
               <form onSubmit={handleUpdate}>
                 <TabsContent value="data" className="space-y-4 mt-4">
@@ -217,6 +226,28 @@ export default function AdminUsersPage() {
                   </Button>
                 </TabsContent>
               </form>
+              <TabsContent value="riwayat" className="mt-4">
+                <div className="max-h-80 overflow-y-auto space-y-2">
+                  {historyLoading ? (
+                    <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                  ) : history.length === 0 ? (
+                    <div className="text-center py-8 text-sm text-muted-foreground">Belum ada riwayat upload dokumen</div>
+                  ) : (
+                    history.map((h) => (
+                      <div key={h.id} className="flex items-center gap-3 p-3 rounded-lg border">
+                        <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{h.file_name}</p>
+                          <p className="text-xs text-muted-foreground">{h.area_name}</p>
+                        </div>
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {new Date(h.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </TabsContent>
             </Tabs>
           )}
         </DialogContent>
