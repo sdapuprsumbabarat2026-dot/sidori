@@ -244,10 +244,9 @@ export default function AdminAreasPage() {
         <Dialog open={createOpen} onOpenChange={(v) => { setCreateOpen(v); if (v) resetForm(); }}>
           <DialogTrigger asChild>
             <Button>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" /> Tambah
-              </Button>
-            </DialogTrigger>
+              <Plus className="h-4 w-4 mr-2" /> Tambah
+            </Button>
+          </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Tambah Daerah Irigasi</DialogTitle>
