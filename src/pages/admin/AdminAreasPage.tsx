@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "../../lib/supabase";
 import { Card, CardContent } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
@@ -150,12 +150,19 @@ export default function AdminAreasPage() {
     setEditOpen(true);
   };
 
-  const AreaForm = ({ onSubmit, submitLabel }: { onSubmit: (e: React.FormEvent) => void; submitLabel: string }) => (
-    <form onSubmit={onSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
-      <div className="space-y-2">
-        <Label>Nama Daerah Irigasi</Label>
-        <Input value={form.name} onChange={(e) => set("name")(e.target.value)} required />
-      </div>
+  const AreaForm = ({ onSubmit, submitLabel, autoFocus }: { onSubmit: (e: React.FormEvent) => void; submitLabel: string; autoFocus?: boolean }) => {
+    const firstInputRef = useRef<HTMLInputElement>(null);
+    useEffect(() => {
+      if (autoFocus && firstInputRef.current) {
+        firstInputRef.current.focus();
+      }
+    }, [autoFocus]);
+    return (
+      <form onSubmit={onSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+        <div className="space-y-2">
+          <Label>Nama Daerah Irigasi</Label>
+          <Input ref={firstInputRef} value={form.name} onChange={(e) => set("name")(e.target.value)} required />
+        </div>
       <div className="space-y-2">
         <Label>Jenis Daerah Irigasi</Label>
         <Select value={form.typeId} onValueChange={set("typeId")} required>
@@ -244,7 +251,7 @@ export default function AdminAreasPage() {
             <DialogHeader>
               <DialogTitle>Tambah Daerah Irigasi</DialogTitle>
             </DialogHeader>
-            <AreaForm onSubmit={handleCreate} submitLabel="Simpan" />
+            <AreaForm onSubmit={handleCreate} submitLabel="Simpan" autoFocus />
           </DialogContent>
         </Dialog>
       </div>
@@ -292,7 +299,7 @@ export default function AdminAreasPage() {
           <DialogHeader>
             <DialogTitle>Edit Daerah Irigasi</DialogTitle>
           </DialogHeader>
-          {editArea && <AreaForm onSubmit={handleEdit} submitLabel="Simpan Perubahan" />}
+          {editArea && <AreaForm onSubmit={handleEdit} submitLabel="Simpan Perubahan" autoFocus />}
         </DialogContent>
       </Dialog>
     </div>
