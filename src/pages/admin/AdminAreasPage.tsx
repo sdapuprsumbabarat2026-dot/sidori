@@ -84,7 +84,6 @@ export default function AdminAreasPage() {
       p_pagu_rp: form.paguRp ? Number(form.paguRp) : null,
       p_tahun_anggaran: Number(form.tahunAnggaran),
     });
-    // Set status jika bukan default 'active'
     if (form.status !== "active" && data?.id) {
       await supabase.rpc("admin_update_area", {
         p_area_id: data.id,
@@ -163,76 +162,77 @@ export default function AdminAreasPage() {
           <Label>Nama Daerah Irigasi</Label>
           <Input ref={firstInputRef} value={form.name} onChange={(e) => set("name")(e.target.value)} required />
         </div>
-      <div className="space-y-2">
-        <Label>Jenis Daerah Irigasi</Label>
-        <Select value={form.typeId} onValueChange={set("typeId")} required>
-          <SelectTrigger><SelectValue placeholder="Pilih jenis" /></SelectTrigger>
-          <SelectContent>
-            {types.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-2">
-        <Label>Menu Kegiatan</Label>
-        <Select value={form.menuKegiatan} onValueChange={set("menuKegiatan")} required>
-          <SelectTrigger><SelectValue placeholder="Pilih menu kegiatan" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="peningkatan">Peningkatan</SelectItem>
-            <SelectItem value="pembangunan">Pembangunan</SelectItem>
-          </SelectContent>
-        </Select>
-        <p className="text-xs text-muted-foreground">
-          Menentukan daftar kategori dokumen wajib (Peningkatan: 8 kategori, Pembangunan: 9 kategori termasuk Surat Izin Penggunaan Lahan).
-        </p>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
-          <Label>Kecamatan</Label>
-          <Input value={form.kecamatan} onChange={(e) => set("kecamatan")(e.target.value)} required />
-        </div>
-        <div className="space-y-2">
-          <Label>Desa</Label>
-          <Input value={form.desa} onChange={(e) => set("desa")(e.target.value)} required />
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-2">
-          <Label>Outcome (Ha)</Label>
-          <Input type="number" step="0.01" min="0" value={form.outcomeHa} onChange={(e) => set("outcomeHa")(e.target.value)} required />
-        </div>
-        <div className="space-y-2">
-          <Label>Pagu (Rp)</Label>
-          <Input type="number" step="1" min="0" value={form.paguRp} onChange={(e) => set("paguRp")(e.target.value)} required />
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-2">
-          <Label>Tahun Anggaran</Label>
-          <Select value={form.tahunAnggaran} onValueChange={set("tahunAnggaran")}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+          <Label>Jenis Daerah Irigasi</Label>
+          <Select value={form.typeId} onValueChange={set("typeId")} required>
+            <SelectTrigger><SelectValue placeholder="Pilih jenis" /></SelectTrigger>
             <SelectContent>
-              {YEARS.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+              {types.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-2">
-          <Label>Status Usulan</Label>
-          <Select value={form.status} onValueChange={set("status")}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+          <Label>Menu Kegiatan</Label>
+          <Select value={form.menuKegiatan} onValueChange={set("menuKegiatan")} required>
+            <SelectTrigger><SelectValue placeholder="Pilih menu kegiatan" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="active">Menunggu Verifikasi</SelectItem>
-              <SelectItem value="approved">Disetujui</SelectItem>
-              <SelectItem value="stock_program">Tidak Disetujui</SelectItem>
+              <SelectItem value="peningkatan">Peningkatan</SelectItem>
+              <SelectItem value="pembangunan">Pembangunan</SelectItem>
             </SelectContent>
           </Select>
+          <p className="text-xs text-muted-foreground">
+            Menentukan daftar kategori dokumen wajib (Peningkatan: 8 kategori, Pembangunan: 9 kategori termasuk Surat Izin Penggunaan Lahan).
+          </p>
         </div>
-      </div>
-      <Button type="submit" disabled={submitting} className="w-full">
-        {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-        {submitLabel}
-      </Button>
-    </form>
-  );
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label>Kecamatan</Label>
+            <Input value={form.kecamatan} onChange={(e) => set("kecamatan")(e.target.value)} required />
+          </div>
+          <div className="space-y-2">
+            <Label>Desa</Label>
+            <Input value={form.desa} onChange={(e) => set("desa")(e.target.value)} required />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label>Outcome (Ha)</Label>
+            <Input type="number" step="0.01" min="0" value={form.outcomeHa} onChange={(e) => set("outcomeHa")(e.target.value)} required />
+          </div>
+          <div className="space-y-2">
+            <Label>Pagu (Rp)</Label>
+            <Input type="number" step="1" min="0" value={form.paguRp} onChange={(e) => set("paguRp")(e.target.value)} required />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label>Tahun Anggaran</Label>
+            <Select value={form.tahunAnggaran} onValueChange={set("tahunAnggaran")}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {YEARS.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Status Usulan</Label>
+            <Select value={form.status} onValueChange={set("status")}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Menunggu Verifikasi</SelectItem>
+                <SelectItem value="approved">Disetujui</SelectItem>
+                <SelectItem value="stock_program">Tidak Disetujui</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <Button type="submit" disabled={submitting} className="w-full">
+          {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+          {submitLabel}
+        </Button>
+      </form>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -244,9 +244,10 @@ export default function AdminAreasPage() {
         <Dialog open={createOpen} onOpenChange={(v) => { setCreateOpen(v); if (v) resetForm(); }}>
           <DialogTrigger asChild>
             <Button>
-              <Plus className="h-4 w-4 mr-2" /> Tambah
-            </Button>
-          </DialogTrigger>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" /> Tambah
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Tambah Daerah Irigasi</DialogTitle>
