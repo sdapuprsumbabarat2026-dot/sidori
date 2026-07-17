@@ -1,6 +1,7 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import { Card, CardContent } from "../../components/ui/card";
+import { Separator } from "../../components/ui/separator";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
@@ -43,6 +44,119 @@ const EMPTY_FORM: FormState = {
   tahunAnggaran: String(CURRENT_YEAR),
   status: "active",
 };
+
+// PENTING: komponen ini HARUS didefinisikan di luar AdminAreasPage (top-level module),
+// bukan di dalam function component-nya. Kalau didefinisikan di dalam, setiap kali state
+// form berubah (misal user ngetik 1 huruf), React menganggap ini "komponen baru" dan
+// me-remount seluruh <input>, sehingga fokus/cursor hilang setiap kali mengetik.
+function AreaForm({
+  form,
+  setField,
+  types,
+  submitting,
+  onSubmit,
+  submitLabel,
+}: {
+  form: FormState;
+  setField: (key: keyof FormState) => (value: string) => void;
+  types: IrrigationType[];
+  submitting: boolean;
+  onSubmit: (e: React.FormEvent) => void;
+  submitLabel: string;
+}) {
+  return (
+    <form onSubmit={onSubmit} className="space-y-5 max-h-[75vh] overflow-y-auto pr-1">
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-muted-foreground">Informasi Dasar</h3>
+        <div className="space-y-2">
+          <Label>Nama Daerah Irigasi</Label>
+          <Input value={form.name} onChange={(e) => setField("name")(e.target.value)} required placeholder="Contoh: DI. Sadang" />
+        </div>
+        <div className="space-y-2">
+          <Label>Jenis Daerah Irigasi</Label>
+          <Select value={form.typeId} onValueChange={setField("typeId")} required>
+            <SelectTrigger><SelectValue placeholder="Pilih jenis" /></SelectTrigger>
+            <SelectContent>
+              {types.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Menu Kegiatan</Label>
+          <Select value={form.menuKegiatan} onValueChange={setField("menuKegiatan")} required>
+            <SelectTrigger><SelectValue placeholder="Pilih menu kegiatan" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="peningkatan">Peningkatan</SelectItem>
+              <SelectItem value="pembangunan">Pembangunan</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Menentukan kategori dokumen wajib (Peningkatan: 8, Pembangunan: 9 termasuk Surat Izin Penggunaan Lahan).
+          </p>
+        </div>
+      </div>
+
+      <Separator />
+
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-muted-foreground">Lokasi &amp; Anggaran</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label>Kecamatan</Label>
+            <Input value={form.kecamatan} onChange={(e) => setField("kecamatan")(e.target.value)} required placeholder="Contoh: Wanokaka" />
+          </div>
+          <div className="space-y-2">
+            <Label>Desa</Label>
+            <Input value={form.desa} onChange={(e) => setField("desa")(e.target.value)} required placeholder="Contoh: Prai Paha" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label>Outcome (Ha)</Label>
+            <Input type="number" step="0.01" min="0" value={form.outcomeHa} onChange={(e) => setField("outcomeHa")(e.target.value)} required placeholder="Contoh: 500" />
+          </div>
+          <div className="space-y-2">
+            <Label>Pagu (Rp)</Label>
+            <Input type="number" step="1" min="0" value={form.paguRp} onChange={(e) => setField("paguRp")(e.target.value)} required placeholder="Contoh: 5000000000" />
+          </div>
+        </div>
+      </div>
+
+      <Separator />
+
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-muted-foreground">Pengaturan</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label>Tahun Anggaran</Label>
+            <Select value={form.tahunAnggaran} onValueChange={setField("tahunAnggaran")}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {YEARS.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Status Usulan</Label>
+            <Select value={form.status} onValueChange={setField("status")}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Menunggu Verifikasi</SelectItem>
+                <SelectItem value="approved">Disetujui</SelectItem>
+                <SelectItem value="stock_program">Tidak Disetujui</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      <Button type="submit" disabled={submitting} className="w-full">
+        {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+        {submitLabel}
+      </Button>
+    </form>
+  );
+}
 
 export default function AdminAreasPage() {
   const [areas, setAreas] = useState<any[]>([]);
@@ -149,118 +263,6 @@ export default function AdminAreasPage() {
     setEditOpen(true);
   };
 
-  const AreaForm = ({ onSubmit, submitLabel }: { onSubmit: (e: React.FormEvent) => void; submitLabel: string }) => {
-    const formRef = useRef<HTMLFormElement>(null);
-    useEffect(() => {
-      const timer = setTimeout(() => {
-        if (document.activeElement instanceof HTMLElement) {
-          document.activeElement.blur();
-        }
-      }, 0);
-      return () => clearTimeout(timer);
-    }, []);
-    return (
-      <form onSubmit={onSubmit} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1" ref={formRef}>
-        <Card>
-          <CardHeader>
-            <CardTitle>Informasi Dasar</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="space-y-2">
-              <Label>Nama Daerah Irigasi</Label>
-              <Input value={form.name} onChange={(e) => setField("name")(e.target.value)} required placeholder="Contoh: DI. Sadang" />
-            </div>
-            <div className="space-y-2">
-              <Label>Jenis Daerah Irigasi</Label>
-              <Select value={form.typeId} onValueChange={setField("typeId")} required>
-                <SelectTrigger><SelectValue placeholder="Pilih jenis" /></SelectTrigger>
-                <SelectContent>
-                  {types.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Menu Kegiatan</Label>
-              <Select value={form.menuKegiatan} onValueChange={setField("menuKegiatan")} required>
-                <SelectTrigger><SelectValue placeholder="Pilih menu kegiatan" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="peningkatan">Peningkatan</SelectItem>
-                  <SelectItem value="pembangunan">Pembangunan</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Menentukan kategori dokumen wajib (Peningkatan: 8, Pembangunan: 9 termasuk Surat Izin Penggunaan Lahan).
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Lokasi &amp; Anggaran</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Kecamatan</Label>
-                <Input value={form.kecamatan} onChange={(e) => setField("kecamatan")(e.target.value)} required placeholder="Contoh: Wanokaka" />
-              </div>
-              <div className="space-y-2">
-                <Label>Desa</Label>
-                <Input value={form.desa} onChange={(e) => setField("desa")(e.target.value)} required placeholder="Contoh: Prai Paha" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Outcome (Ha)</Label>
-                <Input type="number" step="0.01" min="0" value={form.outcomeHa} onChange={(e) => setField("outcomeHa")(e.target.value)} required placeholder="Contoh: 500" />
-              </div>
-              <div className="space-y-2">
-                <Label>Pagu (Rp)</Label>
-                <Input type="number" step="1" min="0" value={form.paguRp} onChange={(e) => setField("paguRp")(e.target.value)} required placeholder="Contoh: 5000000000" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Pengaturan</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Tahun Anggaran</Label>
-                <Select value={form.tahunAnggaran} onValueChange={setField("tahunAnggaran")}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {YEARS.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Status Usulan</Label>
-                <Select value={form.status} onValueChange={setField("status")}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Menunggu Verifikasi</SelectItem>
-                    <SelectItem value="approved">Disetujui</SelectItem>
-                    <SelectItem value="stock_program">Tidak Disetujui</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Button type="submit" disabled={submitting} className="w-full">
-          {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-          {submitLabel}
-        </Button>
-      </form>
-    );
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -276,7 +278,7 @@ export default function AdminAreasPage() {
             <DialogHeader>
               <DialogTitle>Tambah Daerah Irigasi</DialogTitle>
             </DialogHeader>
-            <AreaForm onSubmit={handleCreate} submitLabel="Simpan" />
+            <AreaForm form={form} setField={setField} types={types} submitting={submitting} onSubmit={handleCreate} submitLabel="Simpan" />
           </DialogContent>
         </Dialog>
       </div>
@@ -324,7 +326,7 @@ export default function AdminAreasPage() {
           <DialogHeader>
             <DialogTitle>Edit Daerah Irigasi</DialogTitle>
           </DialogHeader>
-          {editArea && <AreaForm onSubmit={handleEdit} submitLabel="Simpan Perubahan" />}
+          {editArea && <AreaForm form={form} setField={setField} types={types} submitting={submitting} onSubmit={handleEdit} submitLabel="Simpan Perubahan" />}
         </DialogContent>
       </Dialog>
     </div>

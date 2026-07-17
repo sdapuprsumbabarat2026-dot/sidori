@@ -60,7 +60,7 @@ export default function AdminReviewPage() {
       irrigation_area_id: doc.irrigation_area_id,
       file_name: doc.file_name,
       category_name: doc.document_categories?.name,
-      action: status, // 'approved' | 'rejected'
+      action: status,
       performed_by: user?.id,
     });
     setMoving(null);
