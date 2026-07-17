@@ -8,7 +8,6 @@ import { StatusBadge } from "../components/StatusBadge";
 import { useAuthStore } from "../store/authStore";
 import { ListChecks, MapPin, Search, Loader2, CheckCircle2, Archive, ExternalLink, XCircle, AlertCircle } from "lucide-react";
 
-// Total kategori dokumen wajib per menu kegiatan
 const CATEGORY_TOTAL: Record<string, number> = {
   peningkatan: 8,
   pembangunan: 9,

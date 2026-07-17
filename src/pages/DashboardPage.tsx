@@ -29,7 +29,6 @@ export default function DashboardPage() {
   const [totalOutcome, setTotalOutcome] = useState(0);
   const [approvedOutcome, setApprovedOutcome] = useState(0);
 
-  // Ambil daftar tahun yang tersedia dari data daerah irigasi
   useEffect(() => {
     async function loadYears() {
       const { data } = await supabase.from("irrigation_areas").select("tahun_anggaran");
@@ -135,7 +134,6 @@ export default function DashboardPage() {
         </div>
       ) : (
         <>
-          {/* 1. Daerah Irigasi - total only (no per-type breakdown) */}
           <div>
             <h2 className="text-lg font-semibold mb-3">Daerah Irigasi</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -143,7 +141,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* 2. Status Dokumen */}
           <div>
             <h2 className="text-lg font-semibold mb-3">Status Dokumen</h2>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -172,7 +169,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* 3. Status Usulan (per jenis irigasi) */}
           <div>
             <h2 className="text-lg font-semibold mb-3">Status Usulan</h2>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -198,7 +194,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* 4 & 5. Total Pagu dan Total Outcome */}
           <div className="grid gap-4 sm:grid-cols-2">
             <Card className="border-blue-200 dark:border-blue-900">
               <CardContent className="p-5 flex items-center gap-3">
@@ -226,7 +221,6 @@ export default function DashboardPage() {
             </Card>
           </div>
 
-          {/* 7. Pengguna */}
           <div>
             <h2 className="text-lg font-semibold mb-3">Pengguna</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
