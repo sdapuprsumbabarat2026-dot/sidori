@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { cn } from "../../lib/utils";
-import { LayoutDashboard, Droplets, Users, MapPin, FileCheck, ListChecks, PanelLeftClose, PanelLeft, UploadCloud, History } from "lucide-react";
+import { LayoutDashboard, Users, MapPin, FileCheck, ListChecks, PanelLeftClose, PanelLeft, UploadCloud, History } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { Button } from "../ui/button";
 

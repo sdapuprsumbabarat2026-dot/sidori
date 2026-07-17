@@ -3,7 +3,7 @@ import { supabase } from "../lib/supabase";
 import { Card, CardContent } from "../components/ui/card";
 import { StatsCard } from "../components/StatsCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Droplets, Users, MapPin, FileText, Loader2, CheckCircle2, XCircle, Wallet, Ruler } from "lucide-react";
+import { Users, MapPin, FileText, Loader2, CheckCircle2, XCircle, Wallet, Ruler } from "lucide-react";
 
 const CURRENT_YEAR = new Date().getFullYear();
 
