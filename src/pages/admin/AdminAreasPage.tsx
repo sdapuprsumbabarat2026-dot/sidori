@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "../../lib/supabase";
-import { Card, CardContent } from "../../components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
@@ -161,74 +161,98 @@ export default function AdminAreasPage() {
     }, []);
     return (
       <form onSubmit={onSubmit} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1" ref={formRef}>
-        <div className="space-y-2">
-          <Label>Nama Daerah Irigasi</Label>
-          <Input value={form.name} onChange={(e) => setField("name")(e.target.value)} required placeholder="Contoh: DI. Sadang" />
-        </div>
-        <div className="space-y-2">
-          <Label>Jenis Daerah Irigasi</Label>
-          <Select value={form.typeId} onValueChange={setField("typeId")} required>
-            <SelectTrigger><SelectValue placeholder="Pilih jenis" /></SelectTrigger>
-            <SelectContent>
-              {types.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label>Menu Kegiatan</Label>
-          <Select value={form.menuKegiatan} onValueChange={setField("menuKegiatan")} required>
-            <SelectTrigger><SelectValue placeholder="Pilih menu kegiatan" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="peningkatan">Peningkatan</SelectItem>
-              <SelectItem value="pembangunan">Pembangunan</SelectItem>
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground">
-            Menentukan kategori dokumen wajib (Peningkatan: 8, Pembangunan: 9 termasuk Surat Izin Penggunaan Lahan).
-          </p>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label>Kecamatan</Label>
-            <Input value={form.kecamatan} onChange={(e) => setField("kecamatan")(e.target.value)} required placeholder="Contoh: Wanokaka" />
-          </div>
-          <div className="space-y-2">
-            <Label>Desa</Label>
-            <Input value={form.desa} onChange={(e) => setField("desa")(e.target.value)} required placeholder="Contoh: Prai Paha" />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label>Outcome (Ha)</Label>
-            <Input type="number" step="0.01" min="0" value={form.outcomeHa} onChange={(e) => setField("outcomeHa")(e.target.value)} required placeholder="Contoh: 500" />
-          </div>
-          <div className="space-y-2">
-            <Label>Pagu (Rp)</Label>
-            <Input type="number" step="1" min="0" value={form.paguRp} onChange={(e) => setField("paguRp")(e.target.value)} required placeholder="Contoh: 5000000000" />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label>Tahun Anggaran</Label>
-            <Select value={form.tahunAnggaran} onValueChange={setField("tahunAnggaran")}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {YEARS.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Status Usulan</Label>
-            <Select value={form.status} onValueChange={setField("status")}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Menunggu Verifikasi</SelectItem>
-                <SelectItem value="approved">Disetujui</SelectItem>
-                <SelectItem value="stock_program">Tidak Disetujui</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Informasi Dasar</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="space-y-2">
+              <Label>Nama Daerah Irigasi</Label>
+              <Input value={form.name} onChange={(e) => setField("name")(e.target.value)} required placeholder="Contoh: DI. Sadang" />
+            </div>
+            <div className="space-y-2">
+              <Label>Jenis Daerah Irigasi</Label>
+              <Select value={form.typeId} onValueChange={setField("typeId")} required>
+                <SelectTrigger><SelectValue placeholder="Pilih jenis" /></SelectTrigger>
+                <SelectContent>
+                  {types.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Menu Kegiatan</Label>
+              <Select value={form.menuKegiatan} onValueChange={setField("menuKegiatan")} required>
+                <SelectTrigger><SelectValue placeholder="Pilih menu kegiatan" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="peningkatan">Peningkatan</SelectItem>
+                  <SelectItem value="pembangunan">Pembangunan</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Menentukan kategori dokumen wajib (Peningkatan: 8, Pembangunan: 9 termasuk Surat Izin Penggunaan Lahan).
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Lokasi &amp; Anggaran</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Kecamatan</Label>
+                <Input value={form.kecamatan} onChange={(e) => setField("kecamatan")(e.target.value)} required placeholder="Contoh: Wanokaka" />
+              </div>
+              <div className="space-y-2">
+                <Label>Desa</Label>
+                <Input value={form.desa} onChange={(e) => setField("desa")(e.target.value)} required placeholder="Contoh: Prai Paha" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Outcome (Ha)</Label>
+                <Input type="number" step="0.01" min="0" value={form.outcomeHa} onChange={(e) => setField("outcomeHa")(e.target.value)} required placeholder="Contoh: 500" />
+              </div>
+              <div className="space-y-2">
+                <Label>Pagu (Rp)</Label>
+                <Input type="number" step="1" min="0" value={form.paguRp} onChange={(e) => setField("paguRp")(e.target.value)} required placeholder="Contoh: 5000000000" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Pengaturan</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Tahun Anggaran</Label>
+                <Select value={form.tahunAnggaran} onValueChange={setField("tahunAnggaran")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {YEARS.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Status Usulan</Label>
+                <Select value={form.status} onValueChange={setField("status")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Menunggu Verifikasi</SelectItem>
+                    <SelectItem value="approved">Disetujui</SelectItem>
+                    <SelectItem value="stock_program">Tidak Disetujui</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Button type="submit" disabled={submitting} className="w-full">
           {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
           {submitLabel}
