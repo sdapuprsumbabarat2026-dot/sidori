@@ -32,8 +32,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 md:p-8 bg-slate-100">
-      <div className="w-full max-w-6xl min-h-[640px] rounded-2xl overflow-hidden shadow-2xl grid md:grid-cols-2 bg-white">
+    <div className="min-h-screen flex items-center justify-center p-4 md:p-8 bg-background">
+      <div className="w-full max-w-6xl min-h-[640px] rounded-2xl overflow-hidden shadow-2xl grid md:grid-cols-2 bg-card">
         {/* Panel kiri: identitas instansi dengan foto latar */}
         <div className="relative hidden md:flex flex-col justify-between p-10 text-white overflow-hidden">
           <img
@@ -70,7 +70,7 @@ export default function LoginPage() {
         </div>
 
         {/* Panel kanan: form login */}
-        <div className="p-8 md:p-14 flex flex-col justify-center bg-white relative">
+        <div className="p-8 md:p-14 flex flex-col justify-center bg-card relative">
           <Button
             variant="ghost"
             size="icon"
@@ -86,13 +86,13 @@ export default function LoginPage() {
           </div>
 
           <div className="mb-8 text-center md:text-left">
-            <h2 className="text-3xl font-bold text-slate-800">Selamat Datang</h2>
+            <h2 className="text-3xl font-bold text-foreground">Selamat Datang</h2>
             <p className="text-sm text-muted-foreground mt-1">Silakan masuk ke akun SIDORI Anda</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5 max-w-sm mx-auto md:mx-0 w-full">
             <div className="space-y-2">
-              <Label htmlFor="nip" className="text-slate-700">NIP</Label>
+              <Label htmlFor="nip" className="text-foreground">NIP</Label>
               <Input
                 id="nip"
                 type="text"
@@ -100,11 +100,11 @@ export default function LoginPage() {
                 onChange={(e) => setNip(e.target.value)}
                 required
                 placeholder="Nomor Induk Pegawai"
-                className="h-11 bg-white text-slate-900 placeholder:text-slate-400 border-slate-300"
+                className="h-11 bg-background text-foreground placeholder:text-muted-foreground border-border"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-slate-700">Password</Label>
+              <Label htmlFor="password" className="text-foreground">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -112,7 +112,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 placeholder="••••••••"
-                className="h-11 bg-white text-slate-900 placeholder:text-slate-400 border-slate-300"
+                className="h-11 bg-background text-foreground placeholder:text-muted-foreground border-border"
               />
             </div>
             {error && (
