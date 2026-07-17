@@ -20,10 +20,6 @@ CREATE INDEX IF NOT EXISTS idx_irrigation_areas_menu ON irrigation_areas(menu_ke
 ALTER TABLE document_categories
   ADD COLUMN IF NOT EXISTS menu_kegiatan text CHECK (menu_kegiatan IN ('peningkatan', 'pembangunan'));
 
--- Kategori lama (9 kategori, tanpa menu_kegiatan) dibiarkan apa adanya supaya dokumen
--- yang sudah terlanjur diupload tidak kehilangan relasinya (category_id tetap valid).
--- Kategori baru khusus per-menu ditambahkan di bawah ini; area baru akan memakai ini.
-
 INSERT INTO document_categories (name, sort_order, menu_kegiatan) VALUES
   ('Data Calon Petani & Calon Lahan', 1, 'peningkatan'),
   ('Data Sumber Air', 2, 'peningkatan'),
@@ -45,11 +41,6 @@ INSERT INTO document_categories (name, sort_order, menu_kegiatan) VALUES
 ON CONFLICT DO NOTHING;
 
 -- 3. RPC: admin_create_area_full / admin_update_area_full (form lengkap)
--- --------------------------------------------------------------------------------
--- RPC lama admin_create_area(p_name, p_irrigation_type_id, p_status) dan
--- admin_update_area(p_area_id, p_name, p_irrigation_type_id, p_status) tetap ada
--- (dipakai UsulanPage / IrrigationAreasPage untuk update status saja).
-
 CREATE OR REPLACE FUNCTION admin_create_area_full(
   p_name text,
   p_irrigation_type_id uuid,
@@ -99,7 +90,6 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 4. RPC: riwayat daerah irigasi per user (untuk Manajemen Pengguna)
--- --------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION admin_user_area_history(p_user_id uuid)
 RETURNS json AS $$
 DECLARE
