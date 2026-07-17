@@ -154,12 +154,12 @@ export default function AdminAreasPage() {
       <form onSubmit={onSubmit} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
         <div className="space-y-2">
           <Label>Nama Daerah Irigasi</Label>
-          <Input value={form.name} onChange={(e) => setField("name")(e.target.value)} required placeholder="Contoh: DI. Sadang" tabIndex={-1} />
+          <Input value={form.name} onChange={(e) => setField("name")(e.target.value)} required placeholder="Contoh: DI. Sadang" />
         </div>
         <div className="space-y-2">
           <Label>Jenis Daerah Irigasi</Label>
           <Select value={form.typeId} onValueChange={setField("typeId")} required>
-            <SelectTrigger><SelectValue placeholder="Pilih jenis" /></SelectTrigger>
+            <SelectTrigger autoFocus><SelectValue placeholder="Pilih jenis" /></SelectTrigger>
             <SelectContent>
               {types.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
             </SelectContent>
