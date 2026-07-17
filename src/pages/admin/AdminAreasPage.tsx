@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "../../lib/supabase";
 import { Card, CardContent } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
@@ -150,8 +150,17 @@ export default function AdminAreasPage() {
   };
 
   const AreaForm = ({ onSubmit, submitLabel }: { onSubmit: (e: React.FormEvent) => void; submitLabel: string }) => {
+    const formRef = useRef<HTMLFormElement>(null);
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
+      }, 0);
+      return () => clearTimeout(timer);
+    }, []);
     return (
-      <form onSubmit={onSubmit} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+      <form onSubmit={onSubmit} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1" ref={formRef}>
         <div className="space-y-2">
           <Label>Nama Daerah Irigasi</Label>
           <Input value={form.name} onChange={(e) => setField("name")(e.target.value)} required placeholder="Contoh: DI. Sadang" />
@@ -159,7 +168,7 @@ export default function AdminAreasPage() {
         <div className="space-y-2">
           <Label>Jenis Daerah Irigasi</Label>
           <Select value={form.typeId} onValueChange={setField("typeId")} required>
-            <SelectTrigger autoFocus><SelectValue placeholder="Pilih jenis" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder="Pilih jenis" /></SelectTrigger>
             <SelectContent>
               {types.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
             </SelectContent>
