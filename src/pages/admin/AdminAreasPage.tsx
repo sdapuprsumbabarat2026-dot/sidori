@@ -67,7 +67,7 @@ export default function AdminAreasPage() {
 
   useEffect(() => { loadData(); }, []);
 
-  const set = (key: keyof FormState) => (value: string) => setForm((f) => ({ ...f, [key]: value }));
+  const setField = (key: keyof FormState) => (value: string) => setForm((f) => ({ ...f, [key]: value }));
 
   const resetForm = () => setForm(EMPTY_FORM);
 
@@ -157,14 +157,14 @@ export default function AdminAreasPage() {
       }
     }, [autoFocus]);
     return (
-      <form onSubmit={onSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+      <form onSubmit={onSubmit} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
         <div className="space-y-2">
           <Label>Nama Daerah Irigasi</Label>
-          <Input ref={firstInputRef} value={form.name} onChange={(e) => set("name")(e.target.value)} required />
+          <Input ref={firstInputRef} value={form.name} onChange={(e) => setField("name")(e.target.value)} required placeholder="Contoh: DI. Sadang" />
         </div>
         <div className="space-y-2">
           <Label>Jenis Daerah Irigasi</Label>
-          <Select value={form.typeId} onValueChange={set("typeId")} required>
+          <Select value={form.typeId} onValueChange={setField("typeId")} required>
             <SelectTrigger><SelectValue placeholder="Pilih jenis" /></SelectTrigger>
             <SelectContent>
               {types.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
@@ -173,7 +173,7 @@ export default function AdminAreasPage() {
         </div>
         <div className="space-y-2">
           <Label>Menu Kegiatan</Label>
-          <Select value={form.menuKegiatan} onValueChange={set("menuKegiatan")} required>
+          <Select value={form.menuKegiatan} onValueChange={setField("menuKegiatan")} required>
             <SelectTrigger><SelectValue placeholder="Pilih menu kegiatan" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="peningkatan">Peningkatan</SelectItem>
@@ -181,33 +181,33 @@ export default function AdminAreasPage() {
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground">
-            Menentukan daftar kategori dokumen wajib (Peningkatan: 8 kategori, Pembangunan: 9 kategori termasuk Surat Izin Penggunaan Lahan).
+            Menentukan kategori dokumen wajib (Peningkatan: 8, Pembangunan: 9 termasuk Surat Izin Penggunaan Lahan).
           </p>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
             <Label>Kecamatan</Label>
-            <Input value={form.kecamatan} onChange={(e) => set("kecamatan")(e.target.value)} required />
+            <Input value={form.kecamatan} onChange={(e) => setField("kecamatan")(e.target.value)} required placeholder="Contoh: Wanokaka" />
           </div>
           <div className="space-y-2">
             <Label>Desa</Label>
-            <Input value={form.desa} onChange={(e) => set("desa")(e.target.value)} required />
+            <Input value={form.desa} onChange={(e) => setField("desa")(e.target.value)} required placeholder="Contoh: Prai Paha" />
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
             <Label>Outcome (Ha)</Label>
-            <Input type="number" step="0.01" min="0" value={form.outcomeHa} onChange={(e) => set("outcomeHa")(e.target.value)} required />
+            <Input type="number" step="0.01" min="0" value={form.outcomeHa} onChange={(e) => setField("outcomeHa")(e.target.value)} required placeholder="Contoh: 500" />
           </div>
           <div className="space-y-2">
             <Label>Pagu (Rp)</Label>
-            <Input type="number" step="1" min="0" value={form.paguRp} onChange={(e) => set("paguRp")(e.target.value)} required />
+            <Input type="number" step="1" min="0" value={form.paguRp} onChange={(e) => setField("paguRp")(e.target.value)} required placeholder="Contoh: 5000000000" />
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
             <Label>Tahun Anggaran</Label>
-            <Select value={form.tahunAnggaran} onValueChange={set("tahunAnggaran")}>
+            <Select value={form.tahunAnggaran} onValueChange={setField("tahunAnggaran")}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {YEARS.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
@@ -216,7 +216,7 @@ export default function AdminAreasPage() {
           </div>
           <div className="space-y-2">
             <Label>Status Usulan</Label>
-            <Select value={form.status} onValueChange={set("status")}>
+            <Select value={form.status} onValueChange={setField("status")}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="active">Menunggu Verifikasi</SelectItem>
@@ -243,11 +243,9 @@ export default function AdminAreasPage() {
         </div>
         <Dialog open={createOpen} onOpenChange={(v) => { setCreateOpen(v); if (v) resetForm(); }}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" /> Tambah
-            </Button>
+            <Button><Plus className="h-4 w-4 mr-2" /> Tambah</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle>Tambah Daerah Irigasi</DialogTitle>
             </DialogHeader>
@@ -295,7 +293,7 @@ export default function AdminAreasPage() {
       </Card>
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit Daerah Irigasi</DialogTitle>
           </DialogHeader>
