@@ -55,8 +55,7 @@ function formatDate(ts: string) {
 // Kompresi gambar di sisi browser sebelum upload.
 // - JPG/WebP: resize maks 1920px + kualitas JPEG 75% (ukuran turun drastis)
 // - PNG: dipertahankan sebagai PNG (tidak dikonversi ke JPG) supaya transparansi tidak hilang,
-//   hanya di-resize dimensinya kalau melebihi 1920px. PNG lossless jadi penurunan ukurannya
-//   tidak sebesar JPG, tapi tetap membantu untuk screenshot/gambar beresolusi besar.
+//   hanya di-resize dimensinya kalau melebihi 1920px.
 async function compressImageIfNeeded(file: File): Promise<File> {
   if (!file.type.startsWith("image/") || file.type === "image/svg+xml") return file;
 
@@ -75,7 +74,7 @@ async function compressImageIfNeeded(file: File): Promise<File> {
 
     let { width, height } = img;
     const needsResize = width > MAX_DIMENSION || height > MAX_DIMENSION;
-    if (!needsResize && isPng) return file; // PNG kecil, tidak perlu diapa-apakan
+    if (!needsResize && isPng) return file;
 
     if (needsResize) {
       if (width > height) {
@@ -100,7 +99,6 @@ async function compressImageIfNeeded(file: File): Promise<File> {
     );
     if (!blob) return file;
 
-    // Kalau hasil kompresi malah lebih besar (jarang, biasanya file kecil), pakai file asli
     if (blob.size >= file.size) return file;
 
     const newName = isPng
