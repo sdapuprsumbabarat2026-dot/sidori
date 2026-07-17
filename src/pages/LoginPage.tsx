@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { useTheme } from "../hooks/useTheme";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Loader2, Sun, Moon } from "lucide-react";
 
 export default function LoginPage() {
   const [nip, setNip] = useState("");
@@ -12,6 +13,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const { login, user } = useAuth();
+  const { theme, toggle } = useTheme();
   const navigate = useNavigate();
 
   if (user) {
@@ -68,7 +70,16 @@ export default function LoginPage() {
         </div>
 
         {/* Panel kanan: form login */}
-        <div className="p-8 md:p-14 flex flex-col justify-center bg-white">
+        <div className="p-8 md:p-14 flex flex-col justify-center bg-white relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 right-4"
+            onClick={() => toggle()}
+            aria-label="Toggle theme"
+          >
+            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </Button>
           <div className="flex md:hidden items-center justify-center gap-4 mb-6">
             <img src="/logo-kabupaten.png" alt="Logo Kabupaten Sumba Barat" className="h-12 w-auto" />
             <img src="/logo-pupr.png" alt="Logo PUPR" className="h-12 w-auto" />
