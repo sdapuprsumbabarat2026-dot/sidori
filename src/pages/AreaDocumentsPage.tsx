@@ -376,77 +376,6 @@ export default function AreaDocumentsPage() {
         </div>
       </div>
 
-      <div className="grid gap-3">
-        {filteredCategories.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <FileText className="h-12 w-12 mb-3 opacity-50" />
-              <p>{searchQuery ? "Kategori tidak ditemukan" : "Belum ada kategori dokumen"}</p>
-            </CardContent>
-          </Card>
-        ) : filteredCategories.map((cat) => {
-          const existing = existingDocForCategory(cat.id);
-          return (
-            <Card key={cat.id} className={existing ? "" : "border-dashed"}>
-              <CardContent className="py-3 px-4 flex items-center gap-3">
-                <div className={`rounded-full p-1.5 shrink-0 ${existing ? "bg-green-100 dark:bg-green-900" : "bg-muted"}`}>
-                  {existing ? <Check className="h-4 w-4 text-green-600 dark:text-green-400" /> : <Circle className="h-4 w-4 text-muted-foreground" />}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className={`text-sm font-medium ${existing ? "" : "text-muted-foreground"}`}>{cat.name}</p>
-                  {existing ? (
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-                      <span className="truncate max-w-[300px]">{existing.file_name}</span>
-                      {existing.year && <span>{existing.year}</span>}
-                      <span>{formatDate(existing.created_at)}</span>
-                      <span>{formatSize(existing.file_size)}</span>
-                      {existing.uploader?.name && <span>oleh {existing.uploader.name}</span>}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">Belum diupload</p>
-                  )}
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  {existing && (
-                    <>
-                      <Button variant="ghost" size="icon" asChild title="Lihat">
-                        <a href={existing.file_url} target="_blank" rel="noopener noreferrer">
-                          <Eye className="h-4 w-4" />
-                        </a>
-                      </Button>
-                      <StatusBadge status={existing.status} />
-                      {(user?.role === "super_admin" || (user?.role === "user" && existing.status === "rejected")) && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive" title="Hapus">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Hapus Dokumen</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Yakin ingin menghapus <strong>{existing.file_name}</strong>? Tindakan ini tidak bisa dibatalkan.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Batal</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(existing)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                Hapus
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -601,6 +530,77 @@ export default function AreaDocumentsPage() {
             </form>
           </DialogContent>
         </Dialog>
+      </div>
+
+      <div className="grid gap-3">
+        {filteredCategories.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <FileText className="h-12 w-12 mb-3 opacity-50" />
+              <p>{searchQuery ? "Kategori tidak ditemukan" : "Belum ada kategori dokumen"}</p>
+            </CardContent>
+          </Card>
+        ) : filteredCategories.map((cat) => {
+          const existing = existingDocForCategory(cat.id);
+          return (
+            <Card key={cat.id} className={existing ? "" : "border-dashed"}>
+              <CardContent className="py-3 px-4 flex items-center gap-3">
+                <div className={`rounded-full p-1.5 shrink-0 ${existing ? "bg-green-100 dark:bg-green-900" : "bg-muted"}`}>
+                  {existing ? <Check className="h-4 w-4 text-green-600 dark:text-green-400" /> : <Circle className="h-4 w-4 text-muted-foreground" />}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className={`text-sm font-medium ${existing ? "" : "text-muted-foreground"}`}>{cat.name}</p>
+                  {existing ? (
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                      <span className="truncate max-w-[300px]">{existing.file_name}</span>
+                      {existing.year && <span>{existing.year}</span>}
+                      <span>{formatDate(existing.created_at)}</span>
+                      <span>{formatSize(existing.file_size)}</span>
+                      {existing.uploader?.name && <span>oleh {existing.uploader.name}</span>}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Belum diupload</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  {existing && (
+                    <>
+                      <Button variant="ghost" size="icon" asChild title="Lihat">
+                        <a href={existing.file_url} target="_blank" rel="noopener noreferrer">
+                          <Eye className="h-4 w-4" />
+                        </a>
+                      </Button>
+                      <StatusBadge status={existing.status} />
+                      {(user?.role === "super_admin" || (user?.role === "user" && existing.status === "rejected")) && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-destructive" title="Hapus">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Hapus Dokumen</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Yakin ingin menghapus <strong>{existing.file_name}</strong>? Tindakan ini tidak bisa dibatalkan.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Batal</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(existing)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                Hapus
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
