@@ -132,7 +132,7 @@ export default function AdminReviewPage() {
                   {irrType}
                 </h2>
                 <div className="space-y-4 pl-4">
-                  {Object.entries(areas).map(([irrArea, areaDocs]) => (
+                  {Object.entries(areas as Record<string, any[]>).map(([irrArea, areaDocs]) => (
                     <div key={irrArea}>
                       <h3 className="text-sm font-medium text-muted-foreground mb-2">
                         DI. {irrArea}

@@ -29,7 +29,7 @@ import {
 import { StatusBadge } from "../components/StatusBadge";
 import {
   Loader2, Upload, Eye, FileText, Search, Trash2,
-  Calendar, HardDrive, Clock, Check, User, Circle
+  Check, Circle
 } from "lucide-react";
 import type { IrrigationArea, KategoriDokumen } from "../types";
 import { useAuthStore } from "../store/authStore";

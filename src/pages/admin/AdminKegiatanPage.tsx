@@ -57,7 +57,7 @@ export default function AdminKegiatanPage() {
         menuMap.get(key)!.categories.push(c);
       }
       setGroups(
-        Array.from(menuMap.values()).sort((a, b) => (a.slug === "peningkatan" ? -1 : 1))
+        Array.from(menuMap.values()).sort((a) => (a.slug === "peningkatan" ? -1 : 1))
       );
     }
     setLoading(false);
