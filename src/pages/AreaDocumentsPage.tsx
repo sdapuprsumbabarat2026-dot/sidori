@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "../lib/supabase";
+import { uploadToDrive } from "../lib/googleDrive";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -231,14 +232,37 @@ export default function AreaDocumentsPage() {
     removeDragFile();
   }, [uploadedFileId]);
 
-  const uploadFileToGAS = useCallback(async (file: File) => {
+  const uploadToCloud = useCallback(async (file: File) => {
     if (!area) return;
     setUploadPhase("uploading");
     setUploadProgress(0);
     try {
-      setUploadProgress(5);
       const toUpload = await compressImageIfNeeded(file);
       setCompressedFile(toUpload);
+      setUploadProgress(5);
+
+      // Coba Google Drive API langsung (binary, gak perlu Base64, real progress)
+      if (import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+        try {
+          const result = await uploadToDrive(
+            toUpload, uploadYear,
+            area.irrigation_types?.name || "", area.name,
+            (pct) => setUploadProgress(pct),
+          );
+          setUploadProgress(95);
+          setUploadedUrl(result.fileUrl);
+          setUploadedFileId(result.fileId);
+          setUploadProgress(100);
+          setUploadPhase("done");
+          return;
+        } catch (driveErr) {
+          console.warn("Drive API gagal, fallback ke GAS:", driveErr);
+          toast.info("Google sign-in diperlukan. Beralih ke upload via GAS.");
+        }
+      }
+
+      // Fallback: upload via GAS proxy
+      const toUploadGas = await compressImageIfNeeded(file);
       setUploadProgress(10);
 
       const fileBase64 = await new Promise<string>((resolve, reject) => {
@@ -248,29 +272,18 @@ export default function AreaDocumentsPage() {
         };
         reader.onload = () => resolve((reader.result as string).split(",")[1]);
         reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(toUpload);
+        reader.readAsDataURL(toUploadGas);
       });
       setUploadProgress(30);
-      const cat = categories.find((c) => c.id === uploadCategoryRef.current);
-
-      const payload = JSON.stringify({
-        apiKey: GAS_API_KEY,
-        fileBase64,
-        fileName: toUpload.name,
-        mimeType: toUpload.type,
-        irigationType: area.irrigation_types?.name || "",
-        areaName: area.name,
-        year: uploadYear,
-      });
 
       const controller = new AbortController();
-      const timer = setTimeout(() => { controller.abort(); }, 300000);
+      const timer = setTimeout(() => controller.abort(), 300000);
       setUploadProgress(85);
       const res = await fetch(GAS_URL, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({
-          apiKey: GAS_API_KEY, fileBase64, fileName: toUpload.name, mimeType: toUpload.type,
+          apiKey: GAS_API_KEY, fileBase64, fileName: toUploadGas.name, mimeType: toUploadGas.type,
           irigationType: area.irrigation_types?.name || "", areaName: area.name, year: uploadYear,
         }),
         signal: controller.signal,
@@ -278,24 +291,20 @@ export default function AreaDocumentsPage() {
       clearTimeout(timer);
       const result = await res.json();
 
-      setUploadProgress(95);
-      if (!result.success) {
-        toast.error("Upload ke Google Drive gagal: " + (result.error || "unknown"));
-        setUploadPhase("error");
-        return;
-      }
+      if (!result.success) throw new Error(result.error || "unknown");
       setUploadedUrl(result.fileUrl);
       setUploadedFileId(result.fileId);
       setUploadProgress(100);
       setUploadPhase("done");
     } catch (err) {
+      toast.error("Upload gagal: " + ((err as any)?.message || "unknown"));
       setUploadPhase("error");
     }
-  }, [area, uploadYear, categories]);
+  }, [area, uploadYear]);
 
   useEffect(() => {
-    if (dragFile && uploadPhase === "idle") uploadFileToGAS(dragFile);
-  }, [dragFile, uploadFileToGAS, uploadPhase]);
+    if (dragFile && uploadPhase === "idle") uploadToCloud(dragFile);
+  }, [dragFile, uploadToCloud, uploadPhase]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -466,7 +475,7 @@ export default function AreaDocumentsPage() {
                     <div className="border rounded-lg p-6 text-center bg-muted/30">
                       <Loader2 className="h-8 w-8 mx-auto mb-3 animate-spin text-primary" />
                       <p className="text-sm font-medium">
-                        {uploadProgress < 30 ? "Mengompres..." : uploadProgress < 85 ? "Mengupload..." : "Menyimpan ke Google Drive..."}
+                        {uploadProgress < 5 ? "Mengompres..." : uploadProgress < 30 ? "Menyiapkan folder..." : uploadProgress < 95 ? `Mengupload... ${uploadProgress}%` : "Selesai"}
                       </p>
                       <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
                         {uploadProgress < 85 ? (
@@ -481,7 +490,7 @@ export default function AreaDocumentsPage() {
                       <p className="text-sm font-medium text-destructive mb-1">Upload gagal</p>
                       <p className="text-xs text-muted-foreground mb-3">Coba lagi atau pilih file lain</p>
                       <div className="flex justify-center gap-2">
-                        <Button type="button" size="sm" variant="outline" onClick={() => dragFile && uploadFileToGAS(dragFile)}>
+                        <Button type="button" size="sm" variant="outline" onClick={() => dragFile && uploadToCloud(dragFile)}>
                           <Upload className="h-3 w-3 mr-1" /> Ulangi
                         </Button>
                         <Button type="button" size="sm" variant="ghost" onClick={removeDragFile}>
