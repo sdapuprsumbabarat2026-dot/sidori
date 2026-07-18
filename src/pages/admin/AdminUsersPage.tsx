@@ -27,6 +27,7 @@ export default function AdminUsersPage() {
   const [formName, setFormName] = useState("");
   const [formPassword, setFormPassword] = useState("");
   const [formRole, setFormRole] = useState("user");
+  const [editNip, setEditNip] = useState("");
   const [editName, setEditName] = useState("");
   const [editRole, setEditRole] = useState("user");
   const [newPassword, setNewPassword] = useState("");
@@ -55,6 +56,7 @@ export default function AdminUsersPage() {
 
   const openEdit = (u: User) => {
     setEditUser(u);
+    setEditNip(u.nip);
     setEditName(u.name);
     setEditRole(u.role);
     setNewPassword("");
@@ -71,7 +73,7 @@ export default function AdminUsersPage() {
     e.preventDefault();
     if (!editUser) return;
     setSubmitting(true);
-    await supabase.rpc("admin_update_user", { p_user_id: editUser.id, p_name: editName, p_role: editRole });
+    await supabase.rpc("admin_update_user", { p_user_id: editUser.id, p_name: editName, p_role: editRole, p_nip: editNip });
     if (newPassword) {
       await supabase.rpc("admin_change_password", { p_user_id: editUser.id, p_new_password: newPassword });
     }
@@ -194,7 +196,7 @@ export default function AdminUsersPage() {
                 <TabsContent value="data" className="space-y-4 mt-4">
                   <div className="space-y-2">
                     <Label>NIP</Label>
-                    <Input value={editUser.nip} disabled className="bg-muted" />
+                    <Input value={editNip} onChange={(e) => setEditNip(e.target.value)} required placeholder="Nomor Induk Pegawai" />
                   </div>
                   <div className="space-y-2">
                     <Label>Nama</Label>
