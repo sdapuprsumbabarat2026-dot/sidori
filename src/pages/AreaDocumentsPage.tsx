@@ -304,8 +304,21 @@ export default function AreaDocumentsPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadCategory || !id || !user || !dragFile || !uploadedUrl) return;
-    if (existingDocForCategory(uploadCategory)) {
-      toast.error("Dokumen untuk kategori ini sudah ada. Tidak dapat menyimpan duplikat."); return;
+    const existing = existingDocForCategory(uploadCategory);
+    if (existing) {
+      if (existing.file_id) {
+        await fetch(GAS_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({ _method: "DELETE", apiKey: GAS_API_KEY, fileId: existing.file_id }),
+        }).catch(() => {});
+      }
+      await supabase.from("document_activity_log").insert({
+        irrigation_area_id: id, file_name: existing.file_name,
+        category_name: existing.kategori_dokumen?.name, action: "replace",
+        performed_by: user.id,
+      });
+      await supabase.rpc("admin_delete_document", { p_doc_id: existing.id });
     }
     await supabase.from("documents").insert({
       irrigation_area_id: id,
@@ -404,14 +417,12 @@ export default function AreaDocumentsPage() {
                     <SelectValue placeholder="Pilih kategori" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((c) => {
-                      const existing = existingDocForCategory(c.id);
-                      return (
-                        <SelectItem key={c.id} value={c.id} disabled={!!existing}>
-                          {c.name}{existing ? " (sudah ada)" : ""}
-                        </SelectItem>
-                      );
-                    })}
+                    {categories.filter((c) => {
+                      const doc = existingDocForCategory(c.id);
+                      return !doc || doc.status === "rejected";
+                    }).map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}{existingDocForCategory(c.id) ? " (ganti)" : ""}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -570,8 +581,13 @@ export default function AreaDocumentsPage() {
                           <Eye className="h-4 w-4" />
                         </a>
                       </Button>
+                      {existing.status !== "approved" && (
+                        <Button variant="ghost" size="icon" title="Ganti" onClick={() => { setUploadCategory(existing.category_id); setDialogOpen(true) }}>
+                          <Upload className="h-4 w-4" />
+                        </Button>
+                      )}
                       <StatusBadge status={existing.status} />
-                      {(user?.role === "super_admin" || (user?.role === "user" && existing.status === "rejected")) && (
+                      {(user?.role === "super_admin" || (user?.role === "user" && existing.status !== "approved")) && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="ghost" size="icon" className="text-destructive" title="Hapus">
