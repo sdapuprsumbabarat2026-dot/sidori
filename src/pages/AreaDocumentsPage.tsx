@@ -466,10 +466,14 @@ export default function AreaDocumentsPage() {
                     <div className="border rounded-lg p-6 text-center bg-muted/30">
                       <Loader2 className="h-8 w-8 mx-auto mb-3 animate-spin text-primary" />
                       <p className="text-sm font-medium">
-                        {uploadProgress < 30 ? "Mengompres..." : uploadProgress < 85 ? "Mengupload ke Google Drive..." : "Menyimpan ke Google Drive..."}
+                        {uploadProgress < 30 ? "Mengompres..." : uploadProgress < 85 ? "Mengupload..." : "Menyimpan ke Google Drive..."}
                       </p>
                       <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
-                        <div className="h-full bg-primary rounded-full transition-all duration-300" style={{ width: `${Math.min(uploadProgress, 95)}%` }} />
+                        {uploadProgress < 85 ? (
+                          <div className="h-full bg-primary rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                        ) : (
+                          <div className="h-full w-full bg-primary rounded-full animate-pulse" />
+                        )}
                       </div>
                     </div>
                   ) : uploadPhase === "error" ? (
