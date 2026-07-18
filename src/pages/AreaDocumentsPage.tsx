@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
+import { toast } from "sonner";
 import { supabase } from "../lib/supabase";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -27,7 +28,7 @@ import {
 import { StatusBadge } from "../components/StatusBadge";
 import {
   Loader2, Upload, Eye, FileText, Search, Trash2,
-  Calendar, HardDrive, Clock, Check, User
+  Calendar, HardDrive, Clock, Check, User, Circle
 } from "lucide-react";
 import type { IrrigationArea, KategoriDokumen } from "../types";
 import { useAuthStore } from "../store/authStore";
@@ -198,20 +199,20 @@ export default function AreaDocumentsPage() {
     e.preventDefault();
     setDragOver(false);
     const f = e.dataTransfer.files?.[0];
-    if (f && f.size > MAX_FILE_SIZE) { alert("File terlalu besar. Maksimal 15 MB."); return; }
-    if (f && !uploadCategory) { alert("Pilih kategori terlebih dahulu."); return; }
+    if (f && f.size > MAX_FILE_SIZE) { toast.error("File terlalu besar. Maksimal 15 MB."); return; }
+    if (f && !uploadCategory) { toast.error("Pilih kategori terlebih dahulu."); return; }
     if (f && uploadCategory && existingDocForCategory(uploadCategory)) {
-      alert("Dokumen untuk kategori ini sudah ada. Hapus dokumen yang ada terlebih dahulu jika ingin mengganti."); return;
+      toast.error("Dokumen untuk kategori ini sudah ada. Hapus yang ada terlebih dahulu jika ingin mengganti."); return;
     }
     if (f) { removeDragFile(); setTimeout(() => setDragFile(f), 0) }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (f && f.size > MAX_FILE_SIZE) { alert("File terlalu besar. Maksimal 15 MB."); return; }
-    if (f && !uploadCategory) { alert("Pilih kategori terlebih dahulu."); return; }
+    if (f && f.size > MAX_FILE_SIZE) { toast.error("File terlalu besar. Maksimal 15 MB."); return; }
+    if (f && !uploadCategory) { toast.error("Pilih kategori terlebih dahulu."); return; }
     if (f && uploadCategory && existingDocForCategory(uploadCategory)) {
-      alert("Dokumen untuk kategori ini sudah ada. Hapus dokumen yang ada terlebih dahulu jika ingin mengganti."); return;
+      toast.error("Dokumen untuk kategori ini sudah ada. Hapus yang ada terlebih dahulu jika ingin mengganti."); return;
     }
     if (f) { removeDragFile(); setTimeout(() => { setDragFile(f); setDragOver(false) }, 0) }
   };
@@ -291,7 +292,7 @@ export default function AreaDocumentsPage() {
 
       setUploadProgress(95);
       if (!result.success) {
-        alert("Upload ke Google Drive gagal: " + (result.error || "unknown"));
+        toast.error("Upload ke Google Drive gagal: " + (result.error || "unknown"));
         setUploadPhase("error");
         return;
       }
@@ -312,7 +313,7 @@ export default function AreaDocumentsPage() {
     e.preventDefault();
     if (!uploadCategory || !id || !user || !dragFile || !uploadedUrl) return;
     if (existingDocForCategory(uploadCategory)) {
-      alert("Dokumen untuk kategori ini sudah ada. Tidak dapat menyimpan duplikat."); return;
+      toast.error("Dokumen untuk kategori ini sudah ada. Tidak dapat menyimpan duplikat."); return;
     }
     await supabase.from("documents").insert({
       irrigation_area_id: id,
@@ -337,6 +338,7 @@ export default function AreaDocumentsPage() {
     setUploadCategory("");
     setUploadYear(CURRENT_YEAR.toString());
     setDialogOpen(false);
+    toast.success("Dokumen berhasil diupload dan menunggu review.");
     loadData();
   };
 
@@ -358,6 +360,7 @@ export default function AreaDocumentsPage() {
       performed_by: user?.id,
     });
     await supabase.rpc("admin_delete_document", { p_doc_id: doc.id });
+    toast.success("Dokumen berhasil dihapus.");
     loadData();
   };
 
@@ -377,9 +380,35 @@ export default function AreaDocumentsPage() {
           <p className="text-sm text-muted-foreground">{area?.irrigation_types?.name}</p>
         </div>
         <div className="text-sm text-muted-foreground">
-          {documents.length} dokumen
+          {documents.length} dari {categories.length} kategori terisi
         </div>
       </div>
+
+      {categories.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          {categories.map((cat) => {
+            const existing = existingDocForCategory(cat.id);
+            return (
+              <Card key={cat.id} className={existing ? "" : "border-dashed"}>
+                <CardContent className="py-2.5 px-4 flex items-center gap-3">
+                  <div className={`rounded-full p-1 shrink-0 ${existing ? "bg-green-100 dark:bg-green-900" : "bg-muted"}`}>
+                    {existing ? <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400" /> : <Circle className="h-3.5 w-3.5 text-muted-foreground" />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-sm font-medium truncate ${existing ? "" : "text-muted-foreground"}`}>{cat.name}</p>
+                    {existing ? (
+                      <p className="text-xs text-green-600 dark:text-green-400 truncate">{existing.file_name}</p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">Belum diupload</p>
+                    )}
+                  </div>
+                  <div className="shrink-0">{existing && <StatusBadge status={existing.status} />}</div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 max-w-sm">
@@ -409,9 +438,14 @@ export default function AreaDocumentsPage() {
                     <SelectValue placeholder="Pilih kategori" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                    ))}
+                    {categories.map((c) => {
+                      const existing = existingDocForCategory(c.id);
+                      return (
+                        <SelectItem key={c.id} value={c.id} disabled={!!existing}>
+                          {c.name}{existing ? " (sudah ada)" : ""}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>

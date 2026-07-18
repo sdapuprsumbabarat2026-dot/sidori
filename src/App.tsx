@@ -14,9 +14,12 @@ import AdminReviewPage from "./pages/admin/AdminReviewPage";
 import UsulanPage from "./pages/UsulanPage";
 import RiwayatPage from "./pages/RiwayatPage";
 
+import { Toaster } from "sonner";
+
 export default function App() {
   return (
     <ThemeProvider>
+      <Toaster position="top-right" richColors />
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
