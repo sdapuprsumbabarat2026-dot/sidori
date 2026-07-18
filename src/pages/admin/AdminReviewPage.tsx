@@ -41,7 +41,7 @@ export default function AdminReviewPage() {
             fileId: doc.file_id,
             year: (doc.year || new Date().getFullYear()).toString(),
             irigationType: doc.irrigation_areas?.irrigation_types?.name || "",
-            category: doc.document_categories?.name || "",
+            areaName: doc.irrigation_areas?.name || "",
           }),
         });
       } catch { /* cleanup handled by admin */ }

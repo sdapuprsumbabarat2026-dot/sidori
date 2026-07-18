@@ -36,7 +36,7 @@ function doPost(e) {
 function handleMove(params) {
   try {
     if (params.apiKey !== API_KEY) return sendJson({ error: "Invalid API key" }, 403)
-    if (!params.fileId || !params.year || !params.irigationType || !params.category) {
+    if (!params.fileId || !params.year || !params.irigationType || !params.areaName) {
       return sendJson({ error: "Missing required fields" }, 400)
     }
     const file = DriveApp.getFileById(params.fileId)
@@ -44,10 +44,9 @@ function handleMove(params) {
     const root = ensureFolder(FOLDER_NAME)
     const yearFolder = ensureFolder(params.year, root)
     const typeFolder = ensureFolder(params.irigationType, yearFolder)
-    const catFolder = ensureFolder(params.category, typeFolder)
+    const areaFolder = ensureFolder(params.areaName, typeFolder)
 
-    // Move file to categorized folder
-    catFolder.addFile(file)
+    areaFolder.addFile(file)
     file.getParents().next().removeFile(file)
 
     return sendJson({ success: true, fileUrl: file.getUrl() })

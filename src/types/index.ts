@@ -17,11 +17,29 @@ export interface IrrigationArea {
   name: string;
   irrigation_type_id: string;
   status: "active" | "approved" | "stock_program";
+  status_verifikasi?: "usulan_baru" | "stock_program";
+  output_km?: number;
   created_at: string;
 }
 
 export interface DocumentCategory {
   id: string;
+  name: string;
+  sort_order: number;
+}
+
+export interface MenuKegiatan {
+  id: string;
+  name: string;
+  slug: string;
+  created_at: string;
+}
+
+export interface KategoriDokumen {
+  id: string;
+  menu_kegiatan_id: string;
+  menu_kegiatan?: string;
+  menu_slug?: string;
   name: string;
   sort_order: number;
 }
