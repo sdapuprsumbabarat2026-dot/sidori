@@ -8,12 +8,6 @@ import { StatusBadge } from "../components/StatusBadge";
 import { useAuthStore } from "../store/authStore";
 import { ListChecks, MapPin, Search, Loader2, CheckCircle2, Archive, ExternalLink, XCircle, AlertCircle } from "lucide-react";
 
-const CATEGORY_TOTAL: Record<string, number> = {
-  peningkatan: 8,
-  pembangunan: 9,
-};
-const DEFAULT_TOTAL = 9;
-
 export default function UsulanPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -21,18 +15,31 @@ export default function UsulanPage() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
 
   const isAdmin = user?.role === "super_admin";
 
-  const load = () => {
-    supabase
+  const load = async () => {
+    const { data } = await supabase
       .from("irrigation_areas")
       .select("*, irrigation_types(name), documents(status)")
-      .order("name")
-      .then(({ data }) => {
-        if (data) setAreas(data);
-        setLoading(false);
-      });
+      .order("name");
+    if (data) setAreas(data);
+
+    const { data: menus } = await supabase.from("menu_kegiatan").select("id, slug");
+    if (menus) {
+      const counts: Record<string, number> = {};
+      for (const menu of menus) {
+        const { count } = await supabase
+          .from("kategori_dokumen")
+          .select("*", { count: "exact", head: true })
+          .eq("menu_kegiatan_id", menu.id);
+        if (count) counts[menu.slug] = count;
+      }
+      setCategoryCounts(counts);
+    }
+
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -51,7 +58,7 @@ export default function UsulanPage() {
     setUpdating(null);
   };
 
-  const totalFor = (area: any) => CATEGORY_TOTAL[area.menu_kegiatan] ?? DEFAULT_TOTAL;
+  const totalFor = (area: any) => categoryCounts[area.menu_kegiatan] ?? 9;
 
   const ready = areas.filter((a) => {
     const approved = a.documents?.filter((d: any) => d.status === "approved").length || 0;

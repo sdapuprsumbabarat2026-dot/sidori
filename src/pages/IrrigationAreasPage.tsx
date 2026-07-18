@@ -8,8 +8,6 @@ import { StatusBadge } from "../components/StatusBadge";
 import { useAuthStore } from "../store/authStore";
 import { MapPin, FileText, Search, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
 
-const TOTAL_CATEGORIES = 9;
-
 export default function IrrigationAreasPage() {
   const { typeId } = useParams<{ typeId: string }>();
   const navigate = useNavigate();
@@ -19,6 +17,7 @@ export default function IrrigationAreasPage() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
 
   const filtered = searchQuery
     ? areas.filter((a) => a.name.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -28,10 +27,29 @@ export default function IrrigationAreasPage() {
 
   useEffect(() => {
     if (!typeId) return;
-    Promise.all([
-      supabase.from("irrigation_types").select("name").eq("id", typeId).maybeSingle().then(({ data }) => setIrrigationType(data)),
-      supabase.from("irrigation_areas").select("*, documents(status)").eq("irrigation_type_id", typeId).order("name").then(({ data }) => setAreas(data || [])),
-    ]).finally(() => setLoading(false));
+    (async () => {
+      const [typeRes, areasRes] = await Promise.all([
+        supabase.from("irrigation_types").select("name").eq("id", typeId).maybeSingle(),
+        supabase.from("irrigation_areas").select("*, documents(status)").eq("irrigation_type_id", typeId).order("name"),
+      ]);
+      setIrrigationType(typeRes.data);
+      setAreas(areasRes.data || []);
+
+      const { data: menus } = await supabase.from("menu_kegiatan").select("id, slug");
+      if (menus) {
+        const counts: Record<string, number> = {};
+        for (const menu of menus) {
+          const { count } = await supabase
+            .from("kategori_dokumen")
+            .select("*", { count: "exact", head: true })
+            .eq("menu_kegiatan_id", menu.id);
+          if (count) counts[menu.slug] = count;
+        }
+        setCategoryCounts(counts);
+      }
+
+      setLoading(false);
+    })();
   }, [typeId]);
 
   const setStatus = async (areaId: string, status: string) => {
@@ -77,7 +95,8 @@ export default function IrrigationAreasPage() {
         ) : (
           filtered.map((area) => {
             const approved = area.documents?.filter((d: any) => d.status === "approved").length || 0;
-            const allApproved = approved >= TOTAL_CATEGORIES;
+            const total = categoryCounts[area.menu_kegiatan] ?? 9;
+            const allApproved = approved >= total;
             return (
               <Card key={area.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/area/${area.id}`)}>
                 <CardContent className="py-4">
@@ -93,13 +112,13 @@ export default function IrrigationAreasPage() {
                         </div>
                         <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
-                            <FileText className="h-3 w-3" /> {approved}/{TOTAL_CATEGORIES} disetujui
+                            <FileText className="h-3 w-3" /> {approved}/{total} disetujui
                           </span>
                         </div>
                         <div className="mt-1.5 w-full max-w-[200px] bg-muted rounded-full h-1.5">
                           <div
                             className={`h-1.5 rounded-full transition-all ${allApproved ? "bg-green-500" : "bg-primary"}`}
-                            style={{ width: `${(approved / TOTAL_CATEGORIES) * 100}%` }}
+                            style={{ width: `${(approved / total) * 100}%` }}
                           />
                         </div>
                       </div>

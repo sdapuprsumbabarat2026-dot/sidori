@@ -29,7 +29,7 @@ import {
   Loader2, Upload, Eye, FileText, Search, Trash2,
   Calendar, HardDrive, Clock, Check, User
 } from "lucide-react";
-import type { IrrigationArea, DocumentCategory } from "../types";
+import type { IrrigationArea, KategoriDokumen } from "../types";
 import { useAuthStore } from "../store/authStore";
 
 const GAS_URL = import.meta.env.VITE_GAS_URL;
@@ -116,7 +116,7 @@ export default function AreaDocumentsPage() {
   const { id } = useParams<{ id: string }>();
   const user = useAuthStore((s) => s.user);
   const [area, setArea] = useState<IrrigationArea & { irrigation_types: { name: string } } | null>(null);
-  const [categories, setCategories] = useState<DocumentCategory[]>([]);
+  const [categories, setCategories] = useState<KategoriDokumen[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploadPhase, setUploadPhase] = useState<"idle" | "uploading" | "done" | "error">("idle");
@@ -160,11 +160,16 @@ export default function AreaDocumentsPage() {
     const { data: areaData } = await supabase.from("irrigation_areas").select("*, irrigation_types(name)").eq("id", id).maybeSingle();
     setArea(areaData as any);
 
-    let catQuery = supabase.from("document_categories").select("*").order("sort_order");
+    let catQuery;
     if (areaData?.menu_kegiatan) {
-      catQuery = catQuery.eq("menu_kegiatan", areaData.menu_kegiatan);
+      const { data: menuRow } = await supabase.from("menu_kegiatan").select("id").eq("slug", areaData.menu_kegiatan).maybeSingle();
+      if (menuRow?.id) {
+        catQuery = supabase.from("kategori_dokumen").select("*").eq("menu_kegiatan_id", menuRow.id).order("sort_order");
+      } else {
+        catQuery = supabase.from("kategori_dokumen").select("*").order("sort_order");
+      }
     } else {
-      catQuery = catQuery.is("menu_kegiatan", null);
+      catQuery = supabase.from("kategori_dokumen").select("*").order("sort_order");
     }
     const [catRes, docRes] = await Promise.all([
       catQuery,
