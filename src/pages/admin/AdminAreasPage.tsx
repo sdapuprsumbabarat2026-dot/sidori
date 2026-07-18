@@ -31,6 +31,8 @@ type FormState = {
   paguRp: string;
   tahunAnggaran: string;
   status: string;
+  outputKm: string;
+  statusVerifikasi: string;
 };
 
 const EMPTY_FORM: FormState = {
@@ -43,6 +45,8 @@ const EMPTY_FORM: FormState = {
   paguRp: "",
   tahunAnggaran: String(CURRENT_YEAR),
   status: "active",
+  outputKm: "",
+  statusVerifikasi: "usulan_baru",
 };
 
 // PENTING: komponen ini HARUS didefinisikan di luar AdminAreasPage (top-level module),
@@ -116,6 +120,10 @@ function AreaForm({
             <Input type="number" step="0.01" min="0" value={form.outcomeHa} onChange={(e) => setField("outcomeHa")(e.target.value)} required placeholder="Contoh: 500" />
           </div>
           <div className="space-y-2">
+            <Label>Output (Km)</Label>
+            <Input type="number" step="0.01" min="0" value={form.outputKm} onChange={(e) => setField("outputKm")(e.target.value)} placeholder="Contoh: 10.5" />
+          </div>
+          <div className="space-y-2">
             <Label>Pagu (Rp)</Label>
             <Input type="number" step="1" min="0" value={form.paguRp} onChange={(e) => setField("paguRp")(e.target.value)} required placeholder="Contoh: 5000000000" />
           </div>
@@ -144,6 +152,16 @@ function AreaForm({
                 <SelectItem value="active">Menunggu Verifikasi</SelectItem>
                 <SelectItem value="approved">Disetujui</SelectItem>
                 <SelectItem value="stock_program">Tidak Disetujui</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Status Verifikasi</Label>
+            <Select value={form.statusVerifikasi} onValueChange={setField("statusVerifikasi")}>
+              <SelectTrigger><SelectValue placeholder="Pilih status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="usulan_baru">Usulan Baru</SelectItem>
+                <SelectItem value="stock_program">Stock Program</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -197,6 +215,8 @@ export default function AdminAreasPage() {
       p_outcome_ha: form.outcomeHa ? Number(form.outcomeHa) : null,
       p_pagu_rp: form.paguRp ? Number(form.paguRp) : null,
       p_tahun_anggaran: Number(form.tahunAnggaran),
+      p_output_km: form.outputKm ? Number(form.outputKm) : null,
+      p_status_verifikasi: form.statusVerifikasi || null,
     });
     if (form.status !== "active" && data?.id) {
       await supabase.rpc("admin_update_area", {
@@ -226,6 +246,8 @@ export default function AdminAreasPage() {
       p_outcome_ha: form.outcomeHa ? Number(form.outcomeHa) : null,
       p_pagu_rp: form.paguRp ? Number(form.paguRp) : null,
       p_tahun_anggaran: Number(form.tahunAnggaran),
+      p_output_km: form.outputKm ? Number(form.outputKm) : null,
+      p_status_verifikasi: form.statusVerifikasi || null,
     });
     if (form.status !== editArea.status) {
       await supabase.rpc("admin_update_area", {
@@ -259,6 +281,8 @@ export default function AdminAreasPage() {
       paguRp: area.pagu_rp != null ? String(area.pagu_rp) : "",
       tahunAnggaran: area.tahun_anggaran ? String(area.tahun_anggaran) : String(CURRENT_YEAR),
       status: area.status,
+      outputKm: area.output_km != null ? String(area.output_km) : "",
+      statusVerifikasi: area.status_verifikasi || "usulan_baru",
     });
     setEditOpen(true);
   };
@@ -283,43 +307,58 @@ export default function AdminAreasPage() {
         </Dialog>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <div className="divide-y">
-            {loading ? (
-              <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-            ) : areas.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">Belum ada daerah irigasi</div>
-            ) : (
-              areas.map((a) => (
-                <div key={a.id} className="flex items-center justify-between p-4 gap-3 flex-wrap">
-                  <div>
-                    <p className="font-medium">{a.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {a.irrigation_types?.name}
-                      {a.menu_kegiatan && <> &middot; {a.menu_kegiatan === "peningkatan" ? "Peningkatan" : "Pembangunan"}</>}
-                      {a.kecamatan && <> &middot; {a.kecamatan}{a.desa ? `, ${a.desa}` : ""}</>}
-                      {a.tahun_anggaran && <> &middot; TA {a.tahun_anggaran}</>}
-                    </p>
+      {loading ? (
+        <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+      ) : areas.length === 0 ? (
+        <Card><CardContent className="p-0"><div className="divide-y"><div className="text-center py-8 text-muted-foreground">Belum ada daerah irigasi</div></div></CardContent></Card>
+      ) : (
+        (() => {
+          const groupedByYear = areas.reduce((acc: Record<string, any[]>, area) => {
+            const year = area.tahun_anggaran || "Tanpa Tahun";
+            if (!acc[year]) acc[year] = [];
+            acc[year].push(area);
+            return acc;
+          }, {} as Record<string, any[]>);
+          const sortedYears = Object.keys(groupedByYear).sort((a, b) => Number(b) - Number(a));
+          return sortedYears.map((year) => (
+            <div key={year}>
+              <h3 className="text-lg font-semibold mb-3 mt-6 first:mt-0">TA {year}</h3>
+              <Card>
+                <CardContent className="p-0">
+                  <div className="divide-y">
+                    {groupedByYear[year].map((a) => (
+                      <div key={a.id} className="flex items-center justify-between p-4 gap-3 flex-wrap">
+                        <div>
+                          <p className="font-medium">{a.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {a.irrigation_types?.name}
+                            {a.menu_kegiatan && <> &middot; {a.menu_kegiatan === "peningkatan" ? "Peningkatan" : "Pembangunan"}</>}
+                            {a.kecamatan && <> &middot; {a.kecamatan}{a.desa ? `, ${a.desa}` : ""}</>}
+                            {a.output_km != null && <> &middot; {a.output_km} Km</>}
+                            {a.status_verifikasi && <> &middot; {a.status_verifikasi === "usulan_baru" ? "Usulan Baru" : "Stock Program"}</>}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <StatusBadge status={a.status} />
+                          <Button variant="ghost" size="icon" onClick={() => openEdit(a)} title="Edit">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => navigate(`/area/${a.id}`)} title="Lihat dokumen">
+                            <ExternalLink className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(a.id)} title="Hapus">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <StatusBadge status={a.status} />
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(a)} title="Edit">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => navigate(`/area/${a.id}`)} title="Lihat dokumen">
-                      <ExternalLink className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(a.id)} title="Hapus">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </CardContent>
-      </Card>
+                </CardContent>
+              </Card>
+            </div>
+          ));
+        })()
+      )}
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-2xl">
