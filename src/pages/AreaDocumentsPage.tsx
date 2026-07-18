@@ -252,20 +252,28 @@ export default function AreaDocumentsPage() {
       });
       setUploadProgress(30);
 
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 300000);
-      setUploadProgress(85);
-      const res = await fetch(GAS_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          apiKey: GAS_API_KEY, fileBase64, fileName: toUpload.name, mimeType: toUpload.type,
-          irigationType: area.irrigation_types?.name || "", areaName: area.name, year: uploadYear,
-        }),
-        signal: controller.signal,
+      const body = new URLSearchParams({
+        apiKey: GAS_API_KEY, fileBase64, fileName: toUpload.name, mimeType: toUpload.type,
+        irigationType: area.irrigation_types?.name || "", areaName: area.name, year: uploadYear,
       });
-      clearTimeout(timer);
-      const result = await res.json();
+
+      const result = await new Promise<any>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        const timer = setTimeout(() => { xhr.abort(); reject(new Error("Upload timeout")); }, 300000);
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) setUploadProgress(30 + Math.round((e.loaded / e.total) * 55));
+        };
+        xhr.onload = () => {
+          clearTimeout(timer);
+          try { resolve(JSON.parse(xhr.responseText)); }
+          catch { reject(new Error("Invalid response")); }
+        };
+        xhr.onerror = () => { clearTimeout(timer); reject(new Error("Network error")); };
+        xhr.onabort = () => { clearTimeout(timer); reject(new Error("Upload dibatalkan")); };
+        xhr.open("POST", GAS_URL);
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        xhr.send(body.toString());
+      });
 
       if (!result.success) throw new Error(result.error || "unknown");
       setUploadedUrl(result.fileUrl);
@@ -451,14 +459,10 @@ export default function AreaDocumentsPage() {
                     <div className="border rounded-lg p-6 text-center bg-muted/30">
                       <Loader2 className="h-8 w-8 mx-auto mb-3 animate-spin text-primary" />
                       <p className="text-sm font-medium">
-                        {uploadProgress < 5 ? "Mengompres..." : uploadProgress < 30 ? "Menyiapkan folder..." : uploadProgress < 95 ? `Mengupload... ${uploadProgress}%` : "Selesai"}
+                        {uploadProgress < 10 ? "Mengompres..." : uploadProgress < 30 ? "Mengenkripsi..." : `Mengupload... ${uploadProgress}%`}
                       </p>
                       <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
-                        {uploadProgress < 85 ? (
-                          <div className="h-full bg-primary rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
-                        ) : (
-                          <div className="h-full w-full bg-primary rounded-full animate-pulse" />
-                        )}
+                        <div className="h-full bg-primary rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
                       </div>
                     </div>
                   ) : uploadPhase === "error" ? (
