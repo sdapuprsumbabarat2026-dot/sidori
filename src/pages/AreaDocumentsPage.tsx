@@ -120,6 +120,7 @@ export default function AreaDocumentsPage() {
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploadPhase, setUploadPhase] = useState<"idle" | "uploading" | "done" | "error">("idle");
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedUrl, setUploadedUrl] = useState("");
   const [uploadedFileId, setUploadedFileId] = useState("");
   const [compressedFile, setCompressedFile] = useState<File | null>(null);
@@ -240,37 +241,55 @@ export default function AreaDocumentsPage() {
   const uploadFileToGAS = useCallback(async (file: File) => {
     if (!area) return;
     setUploadPhase("uploading");
+    setUploadProgress(0);
     try {
+      setUploadProgress(5);
       const toUpload = await compressImageIfNeeded(file);
       setCompressedFile(toUpload);
+      setUploadProgress(10);
 
       const fileBase64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
+        reader.onprogress = (e) => {
+          if (e.lengthComputable) setUploadProgress(10 + Math.round((e.loaded / e.total) * 20));
+        };
         reader.onload = () => resolve((reader.result as string).split(",")[1]);
         reader.onerror = () => reject(reader.error);
         reader.readAsDataURL(toUpload);
       });
+      setUploadProgress(30);
       const cat = categories.find((c) => c.id === uploadCategoryRef.current);
 
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 120000);
-      const res = await fetch(GAS_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        signal: controller.signal,
-        body: JSON.stringify({
-          apiKey: GAS_API_KEY,
-          fileBase64,
-          fileName: toUpload.name,
-          mimeType: toUpload.type,
-          irigationType: area.irrigation_types?.name || "",
-          category: cat?.name || "",
-          year: uploadYear,
-        }),
+      const payload = JSON.stringify({
+        apiKey: GAS_API_KEY,
+        fileBase64,
+        fileName: toUpload.name,
+        mimeType: toUpload.type,
+        irigationType: area.irrigation_types?.name || "",
+        areaName: area.name,
+        year: uploadYear,
       });
-      clearTimeout(timer);
 
-      const result = await res.json();
+      const result = await new Promise<any>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        const timer = setTimeout(() => { xhr.abort(); reject(new Error("Upload timeout")); }, 300000);
+
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) setUploadProgress(30 + Math.round((e.loaded / e.total) * 55));
+        };
+        xhr.onload = () => {
+          clearTimeout(timer);
+          try { resolve(JSON.parse(xhr.responseText)); }
+          catch { reject(new Error("Invalid response")); }
+        };
+        xhr.onerror = () => { clearTimeout(timer); reject(new Error("Network error")); };
+        xhr.onabort = () => { clearTimeout(timer); reject(new Error("Upload dibatalkan")); };
+        xhr.open("POST", GAS_URL);
+        xhr.setRequestHeader("Content-Type", "text/plain");
+        xhr.send(payload);
+      });
+
+      setUploadProgress(95);
       if (!result.success) {
         alert("Upload ke Google Drive gagal: " + (result.error || "unknown"));
         setUploadPhase("error");
@@ -278,6 +297,7 @@ export default function AreaDocumentsPage() {
       }
       setUploadedUrl(result.fileUrl);
       setUploadedFileId(result.fileId);
+      setUploadProgress(100);
       setUploadPhase("done");
     } catch (err) {
       setUploadPhase("error");
@@ -439,11 +459,14 @@ export default function AreaDocumentsPage() {
                     <div className="border rounded-lg p-6 text-center bg-muted/30">
                       <Loader2 className="h-8 w-8 mx-auto mb-3 animate-spin text-primary" />
                       <p className="text-sm font-medium">
-                        {dragFile?.type.startsWith("image/") ? "Mengompres & mengupload..." : "Mengupload ke Google Drive..."}
+                        {uploadProgress < 30 ? "Mengompres..." : `Mengupload ke Google Drive... ${uploadProgress}%`}
                       </p>
                       <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
-                        <div className="h-full bg-primary rounded-full animate-pulse" style={{ width: "60%" }} />
+                        <div className="h-full bg-primary rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
                       </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {uploadProgress < 85 ? "Mengirim data ke server..." : "Menyimpan ke Google Drive..."}
+                      </p>
                     </div>
                   ) : uploadPhase === "error" ? (
                     <div className="border rounded-lg p-6 text-center bg-destructive/5 border border-destructive/30">
