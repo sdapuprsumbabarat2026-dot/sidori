@@ -139,23 +139,15 @@ export default function AreaDocumentsPage() {
     return documents.find((d) => d.category_id === catId);
   }, [documents]);
 
-  const filteredDocs = searchQuery
-    ? documents.filter(
-        (d) =>
-          d.file_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          d.kategori_dokumen?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          d.year?.toString().includes(searchQuery)
-      )
-    : documents;
-
-  const groupedByYear = filteredDocs.reduce((acc: Record<string, any[]>, doc) => {
-    const year = doc.year || "Tanpa Tahun";
-    if (!acc[year]) acc[year] = [];
-    acc[year].push(doc);
-    return acc;
-  }, {});
-
-  const sortedYears = Object.keys(groupedByYear).sort((a, b) => Number(b) - Number(a));
+  const filteredCategories = searchQuery
+    ? categories.filter((c) => {
+        const doc = existingDocForCategory(c.id);
+        const nameMatch = c.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const fileMatch = doc?.file_name?.toLowerCase().includes(searchQuery.toLowerCase());
+        const yearMatch = doc?.year?.toString().includes(searchQuery);
+        return nameMatch || fileMatch || yearMatch;
+      })
+    : categories;
 
   const loadData = useCallback(async () => {
     if (!id) return;
@@ -384,6 +376,77 @@ export default function AreaDocumentsPage() {
         </div>
       </div>
 
+      <div className="grid gap-3">
+        {filteredCategories.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <FileText className="h-12 w-12 mb-3 opacity-50" />
+              <p>{searchQuery ? "Kategori tidak ditemukan" : "Belum ada kategori dokumen"}</p>
+            </CardContent>
+          </Card>
+        ) : filteredCategories.map((cat) => {
+          const existing = existingDocForCategory(cat.id);
+          return (
+            <Card key={cat.id} className={existing ? "" : "border-dashed"}>
+              <CardContent className="py-3 px-4 flex items-center gap-3">
+                <div className={`rounded-full p-1.5 shrink-0 ${existing ? "bg-green-100 dark:bg-green-900" : "bg-muted"}`}>
+                  {existing ? <Check className="h-4 w-4 text-green-600 dark:text-green-400" /> : <Circle className="h-4 w-4 text-muted-foreground" />}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className={`text-sm font-medium ${existing ? "" : "text-muted-foreground"}`}>{cat.name}</p>
+                  {existing ? (
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                      <span className="truncate max-w-[300px]">{existing.file_name}</span>
+                      {existing.year && <span>{existing.year}</span>}
+                      <span>{formatDate(existing.created_at)}</span>
+                      <span>{formatSize(existing.file_size)}</span>
+                      {existing.uploader?.name && <span>oleh {existing.uploader.name}</span>}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Belum diupload</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  {existing && (
+                    <>
+                      <Button variant="ghost" size="icon" asChild title="Lihat">
+                        <a href={existing.file_url} target="_blank" rel="noopener noreferrer">
+                          <Eye className="h-4 w-4" />
+                        </a>
+                      </Button>
+                      <StatusBadge status={existing.status} />
+                      {(user?.role === "super_admin" || (user?.role === "user" && existing.status === "rejected")) && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-destructive" title="Hapus">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Hapus Dokumen</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Yakin ingin menghapus <strong>{existing.file_name}</strong>? Tindakan ini tidak bisa dibatalkan.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Batal</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(existing)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                Hapus
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -538,132 +601,6 @@ export default function AreaDocumentsPage() {
             </form>
           </DialogContent>
         </Dialog>
-      </div>
-
-      <div className="grid gap-3">
-        {filteredDocs.length === 0 ? (
-          <Card>
-            <CardContent className="py-8 text-muted-foreground">
-              {searchQuery ? (
-                <div className="flex flex-col items-center justify-center py-6">
-                  <FileText className="h-12 w-12 mb-3 opacity-50" />
-                  <p>Dokumen tidak ditemukan</p>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div className="flex flex-col items-center justify-center text-center">
-                    <FileText className="h-12 w-12 mb-3 opacity-50" />
-                    <p>Belum ada dokumen</p>
-                    <Button variant="link" onClick={() => setDialogOpen(true)}>Upload dokumen pertama</Button>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                    {categories.map((cat) => {
-                      const existing = existingDocForCategory(cat.id);
-                      return (
-                        <Card key={cat.id} className={existing ? "" : "border-dashed"}>
-                          <CardContent className="py-2.5 px-4 flex items-center gap-3">
-                            <div className={`rounded-full p-1 shrink-0 ${existing ? "bg-green-100 dark:bg-green-900" : "bg-muted"}`}>
-                              {existing ? <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400" /> : <Circle className="h-3.5 w-3.5 text-muted-foreground" />}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className={`text-sm font-medium truncate ${existing ? "" : "text-muted-foreground"}`}>{cat.name}</p>
-                              {existing ? (
-                                <p className="text-xs text-green-600 dark:text-green-400 truncate">{existing.file_name}</p>
-                              ) : (
-                                <p className="text-xs text-muted-foreground">Belum diupload</p>
-                              )}
-                            </div>
-                            <div className="shrink-0">{existing && <StatusBadge status={existing.status} />}</div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ) : (
-          sortedYears.map((year) => (
-            <div key={year}>
-              <h3 className="text-lg font-semibold mb-3 mt-6 first:mt-0">Tahun {year}</h3>
-              {groupedByYear[year].map((doc) => (
-                <Card key={doc.id} className="group">
-                  <CardContent className="py-4">
-                    <div className="flex items-start gap-4">
-                      <div className="rounded-lg bg-primary/10 p-2.5 shrink-0 hidden sm:block">
-                        <FileText className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <p className="font-medium truncate">{doc.file_name}</p>
-                            <p className="text-xs text-muted-foreground">{doc.kategori_dokumen?.name}</p>
-                          </div>
-                          <StatusBadge status={doc.status} />
-                        </div>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground">
-                          {doc.year && (
-                            <span className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" /> {doc.year}
-                            </span>
-                          )}
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" /> {formatDate(doc.created_at)}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <HardDrive className="h-3 w-3" /> {formatSize(doc.file_size)}
-                          </span>
-                          {doc.uploader?.name && (
-                            <span className="flex items-center gap-1">
-                              <User className="h-3 w-3" /> Diupload oleh {doc.uploader.name}
-                            </span>
-                          )}
-                        </div>
-                        {doc.status === "rejected" && doc.notes && (
-                          <div className="mt-2 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900">
-                            <p className="text-xs font-medium text-red-700 dark:text-red-400 mb-1">Catatan Perbaikan:</p>
-                            <p className="text-sm text-red-600 dark:text-red-300">{doc.notes}</p>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <Button variant="ghost" size="icon" asChild title="Lihat">
-                          <a href={doc.file_url} target="_blank" rel="noopener noreferrer">
-                            <Eye className="h-4 w-4" />
-                          </a>
-                        </Button>
-                        {(user?.role === "super_admin" || (user?.role === "user" && doc.status === "rejected")) && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="text-destructive" title="Hapus">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Hapus Dokumen</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Yakin ingin menghapus <strong>{doc.file_name}</strong>? Tindakan ini tidak bisa dibatalkan.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Batal</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(doc)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                  Hapus
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ))
-        )}
       </div>
     </div>
   );
