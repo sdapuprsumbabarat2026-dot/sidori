@@ -2,7 +2,6 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "../lib/supabase";
-import { uploadToDrive } from "../lib/googleDrive";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -232,37 +231,14 @@ export default function AreaDocumentsPage() {
     removeDragFile();
   }, [uploadedFileId]);
 
-  const uploadToCloud = useCallback(async (file: File) => {
+  const uploadToGAS = useCallback(async (file: File) => {
     if (!area) return;
     setUploadPhase("uploading");
     setUploadProgress(0);
     try {
+      setUploadProgress(5);
       const toUpload = await compressImageIfNeeded(file);
       setCompressedFile(toUpload);
-      setUploadProgress(5);
-
-      // Coba Google Drive API langsung (binary, gak perlu Base64, real progress)
-      if (import.meta.env.VITE_GOOGLE_CLIENT_ID) {
-        try {
-          const result = await uploadToDrive(
-            toUpload, uploadYear,
-            area.irrigation_types?.name || "", area.name,
-            (pct) => setUploadProgress(pct),
-          );
-          setUploadProgress(95);
-          setUploadedUrl(result.fileUrl);
-          setUploadedFileId(result.fileId);
-          setUploadProgress(100);
-          setUploadPhase("done");
-          return;
-        } catch (driveErr) {
-          console.warn("Drive API gagal, fallback ke GAS:", driveErr);
-          toast.info("Google sign-in diperlukan. Beralih ke upload via GAS.");
-        }
-      }
-
-      // Fallback: upload via GAS proxy
-      const toUploadGas = await compressImageIfNeeded(file);
       setUploadProgress(10);
 
       const fileBase64 = await new Promise<string>((resolve, reject) => {
@@ -272,7 +248,7 @@ export default function AreaDocumentsPage() {
         };
         reader.onload = () => resolve((reader.result as string).split(",")[1]);
         reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(toUploadGas);
+        reader.readAsDataURL(toUpload);
       });
       setUploadProgress(30);
 
@@ -283,7 +259,7 @@ export default function AreaDocumentsPage() {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({
-          apiKey: GAS_API_KEY, fileBase64, fileName: toUploadGas.name, mimeType: toUploadGas.type,
+          apiKey: GAS_API_KEY, fileBase64, fileName: toUpload.name, mimeType: toUpload.type,
           irigationType: area.irrigation_types?.name || "", areaName: area.name, year: uploadYear,
         }),
         signal: controller.signal,
@@ -303,8 +279,8 @@ export default function AreaDocumentsPage() {
   }, [area, uploadYear]);
 
   useEffect(() => {
-    if (dragFile && uploadPhase === "idle") uploadToCloud(dragFile);
-  }, [dragFile, uploadToCloud, uploadPhase]);
+    if (dragFile && uploadPhase === "idle") uploadToGAS(dragFile);
+  }, [dragFile, uploadToGAS, uploadPhase]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -490,7 +466,7 @@ export default function AreaDocumentsPage() {
                       <p className="text-sm font-medium text-destructive mb-1">Upload gagal</p>
                       <p className="text-xs text-muted-foreground mb-3">Coba lagi atau pilih file lain</p>
                       <div className="flex justify-center gap-2">
-                        <Button type="button" size="sm" variant="outline" onClick={() => dragFile && uploadToCloud(dragFile)}>
+                        <Button type="button" size="sm" variant="outline" onClick={() => dragFile && uploadToGAS(dragFile)}>
                           <Upload className="h-3 w-3 mr-1" /> Ulangi
                         </Button>
                         <Button type="button" size="sm" variant="ghost" onClick={removeDragFile}>
