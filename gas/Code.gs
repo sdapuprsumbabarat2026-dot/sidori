@@ -15,14 +15,28 @@ function doPost(e) {
     const data = JSON.parse(e.postData.contents)
     if (data.apiKey !== API_KEY) return sendJson({ error: "Invalid API key" }, 403)
 
-    const { fileBase64, fileName, mimeType } = data
+    const { fileBase64, fileName, mimeType, year, irigationType, areaName } = data
     if (!fileBase64 || !fileName) {
       return sendJson({ error: "Missing required fields" }, 400)
     }
 
     const root = ensureFolder(FOLDER_NAME)
-    const temp = ensureFolder(TEMP_FOLDER, root)
 
+    // If area info is provided, upload langsung ke folder akhir
+    if (year && irigationType && areaName) {
+      const yearFolder = ensureFolder(year, root)
+      const typeFolder = ensureFolder(irigationType, yearFolder)
+      const areaFolder = ensureFolder(areaName, typeFolder)
+
+      const blob = Utilities.newBlob(Utilities.base64Decode(fileBase64), mimeType || "application/octet-stream", fileName)
+      const file = areaFolder.createFile(blob)
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW)
+
+      return sendJson({ success: true, fileId: file.getId(), fileUrl: file.getUrl() })
+    }
+
+    // Fallback: upload ke temp dulu
+    const temp = ensureFolder(TEMP_FOLDER, root)
     const blob = Utilities.newBlob(Utilities.base64Decode(fileBase64), mimeType || "application/octet-stream", fileName)
     const file = temp.createFile(blob)
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW)

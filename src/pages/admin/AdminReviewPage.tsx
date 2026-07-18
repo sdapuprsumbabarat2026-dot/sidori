@@ -51,22 +51,6 @@ export default function AdminReviewPage() {
 
   const handleReview = async (doc: any, status: "approved" | "rejected", notes?: string) => {
     setMoving(doc.id);
-    if (status === "approved" && doc.file_id) {
-      try {
-        await fetch(GAS_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({
-            _method: "MOVE",
-            apiKey: GAS_API_KEY,
-            fileId: doc.file_id,
-            year: (doc.year || new Date().getFullYear()).toString(),
-            irigationType: doc.irrigation_areas?.irrigation_types?.name || "",
-            areaName: doc.irrigation_areas?.name || "",
-          }),
-        });
-      } catch { /* cleanup handled by admin */ }
-    }
     if (status === "rejected" && doc.file_id) {
       try {
         await fetch(GAS_URL, {
