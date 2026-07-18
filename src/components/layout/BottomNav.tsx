@@ -11,9 +11,10 @@ const items = [
 ];
 
 const adminItems = [
+  { to: "/admin/areas", icon: MapPin, label: "Area" },
+  { to: "/admin/kegiatan", icon: ListChecks, label: "Kegiatan" },
   { to: "/admin/review", icon: FileCheck, label: "Review" },
   { to: "/admin/users", icon: Users, label: "Pengguna" },
-  { to: "/admin/areas", icon: MapPin, label: "Area" },
 ];
 
 export default function BottomNav() {

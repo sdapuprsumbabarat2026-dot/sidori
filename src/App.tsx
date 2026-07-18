@@ -9,6 +9,7 @@ import IrrigationAreasPage from "./pages/IrrigationAreasPage";
 import AreaDocumentsPage from "./pages/AreaDocumentsPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminAreasPage from "./pages/admin/AdminAreasPage";
+import AdminKegiatanPage from "./pages/admin/AdminKegiatanPage";
 import AdminReviewPage from "./pages/admin/AdminReviewPage";
 import UsulanPage from "./pages/UsulanPage";
 import RiwayatPage from "./pages/RiwayatPage";
@@ -34,6 +35,7 @@ export default function App() {
             <Route path="riwayat" element={<RiwayatPage />} />
             <Route path="admin/users" element={<ProtectedRoute adminOnly><AdminUsersPage /></ProtectedRoute>} />
             <Route path="admin/areas" element={<ProtectedRoute adminOnly><AdminAreasPage /></ProtectedRoute>} />
+            <Route path="admin/kegiatan" element={<ProtectedRoute adminOnly><AdminKegiatanPage /></ProtectedRoute>} />
             <Route path="admin/review" element={<ProtectedRoute adminOnly><AdminReviewPage /></ProtectedRoute>} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

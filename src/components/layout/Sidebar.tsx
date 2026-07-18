@@ -13,9 +13,10 @@ const navItems = [
 ];
 
 const adminItems = [
+  { to: "/admin/areas", icon: MapPin, label: "Daerah Irigasi" },
+  { to: "/admin/kegiatan", icon: ListChecks, label: "Menu Kegiatan" },
   { to: "/admin/review", icon: FileCheck, label: "Review Dokumen" },
   { to: "/admin/users", icon: Users, label: "Pengguna" },
-  { to: "/admin/areas", icon: MapPin, label: "Daerah Irigasi" },
 ];
 
 export default function Sidebar() {
