@@ -68,6 +68,18 @@ export default function UsulanPage() {
     ? done.filter((a) => a.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : done;
 
+  const groupByYear = (items: any[]) => {
+    return items.reduce((acc: Record<string, any[]>, item) => {
+      const year = item.tahun_anggaran || "Tanpa Tahun";
+      if (!acc[year]) acc[year] = [];
+      acc[year].push(item);
+      return acc;
+    }, {} as Record<string, any[]>);
+  };
+
+  const groupedReady = groupByYear(filteredReady);
+  const groupedDone = groupByYear(filteredDone);
+
   return (
     <div className="space-y-6">
       <div>
@@ -96,37 +108,44 @@ export default function UsulanPage() {
               </CardContent>
             </Card>
           ) : (
-            filteredReady.map((area) => (
-              <Card key={area.id} className="border-amber-200 dark:border-amber-900">
-                <CardContent className="py-4">
-                  <div className="flex items-center justify-between flex-wrap gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="rounded-lg bg-amber-100 dark:bg-amber-900/30 p-2">
-                        <ListChecks className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-medium truncate">{area.name}</p>
-                          <StatusBadge status={area.status} />
+            Object.keys(groupedReady).sort((a, b) => Number(b) - Number(a)).map((year) => (
+              <div key={year}>
+                <h3 className="text-lg font-semibold mb-3 mt-6 first:mt-0">TA {year}</h3>
+                <div className="grid gap-3">
+                  {groupedReady[year].map((area) => (
+                    <Card key={area.id} className="border-amber-200 dark:border-amber-900">
+                      <CardContent className="py-4">
+                        <div className="flex items-center justify-between flex-wrap gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="rounded-lg bg-amber-100 dark:bg-amber-900/30 p-2">
+                              <ListChecks className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="font-medium truncate">{area.name}</p>
+                                <StatusBadge status={area.status} />
+                              </div>
+                              <p className="text-xs text-muted-foreground">{area.irrigation_types?.name}</p>
+                            </div>
+                          </div>
+                          {isAdmin && (
+                            <div className="flex items-center gap-1 shrink-0">
+                              <Button size="sm" disabled={updating === area.id} onClick={() => setStatus(area.id, "approved")}>
+                                {updating === area.id ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <CheckCircle2 className="h-3 w-3 mr-1" />}
+                                Disetujui
+                              </Button>
+                              <Button size="sm" variant="secondary" disabled={updating === area.id} onClick={() => setStatus(area.id, "stock_program")}>
+                                <XCircle className="h-3 w-3 mr-1" />
+                                Tidak Disetujui
+                              </Button>
+                            </div>
+                          )}
                         </div>
-                        <p className="text-xs text-muted-foreground">{area.irrigation_types?.name}</p>
-                      </div>
-                    </div>
-                    {isAdmin && (
-                      <div className="flex items-center gap-1 shrink-0">
-                        <Button size="sm" disabled={updating === area.id} onClick={() => setStatus(area.id, "approved")}>
-                          {updating === area.id ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <CheckCircle2 className="h-3 w-3 mr-1" />}
-                          Disetujui
-                        </Button>
-                        <Button size="sm" variant="secondary" disabled={updating === area.id} onClick={() => setStatus(area.id, "stock_program")}>
-                          <XCircle className="h-3 w-3 mr-1" />
-                          Tidak Disetujui
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
             ))
           )}
         </div>
@@ -146,36 +165,43 @@ export default function UsulanPage() {
               </CardContent>
             </Card>
           ) : (
-            filteredDone.map((area) => {
-              const approved = area.documents?.filter((d: any) => d.status === "approved").length || 0;
-              const isStock = area.status === "stock_program";
-              return (
-                <Card key={area.id} className="opacity-80 hover:opacity-100 transition-opacity cursor-pointer" onClick={() => navigate(`/area/${area.id}`)}>
-                  <CardContent className="py-4">
-                    <div className="flex items-center justify-between flex-wrap gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="rounded-lg bg-primary/10 p-2">
-                          <MapPin className="h-5 w-5 text-primary" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-medium truncate">{area.name}</p>
-                            <StatusBadge status={area.status} />
-                            {isStock && (
-                              <span className="text-xs text-muted-foreground italic flex items-center gap-1">
-                                <AlertCircle className="h-3 w-3" /> Dijadikan Stock Program
-                              </span>
-                            )}
+            Object.keys(groupedDone).sort((a, b) => Number(b) - Number(a)).map((year) => (
+              <div key={year}>
+                <h3 className="text-lg font-semibold mb-3 mt-6 first:mt-0">TA {year}</h3>
+                <div className="grid gap-3">
+                  {groupedDone[year].map((area) => {
+                    const approved = area.documents?.filter((d: any) => d.status === "approved").length || 0;
+                    const isStock = area.status === "stock_program";
+                    return (
+                      <Card key={area.id} className="opacity-80 hover:opacity-100 transition-opacity cursor-pointer" onClick={() => navigate(`/area/${area.id}`)}>
+                        <CardContent className="py-4">
+                          <div className="flex items-center justify-between flex-wrap gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="rounded-lg bg-primary/10 p-2">
+                                <MapPin className="h-5 w-5 text-primary" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <p className="font-medium truncate">{area.name}</p>
+                                  <StatusBadge status={area.status} />
+                                  {isStock && (
+                                    <span className="text-xs text-muted-foreground italic flex items-center gap-1">
+                                      <AlertCircle className="h-3 w-3" /> Dijadikan Stock Program
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-muted-foreground">{area.irrigation_types?.name} &middot; {approved}/{totalFor(area)} dokumen</p>
+                              </div>
+                            </div>
+                            <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />
                           </div>
-                          <p className="text-xs text-muted-foreground">{area.irrigation_types?.name} &middot; {approved}/{totalFor(area)} dokumen</p>
-                        </div>
-                      </div>
-                      <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
           )}
         </div>
       </div>
