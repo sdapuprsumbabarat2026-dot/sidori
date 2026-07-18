@@ -5,6 +5,7 @@ import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { StatusBadge } from "../components/StatusBadge";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../components/ui/select";
 import { useAuthStore } from "../store/authStore";
 import { MapPin, FileText, Search, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
 
@@ -17,6 +18,8 @@ export default function IrrigationAreasPage() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedYear, setSelectedYear] = useState("");
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
 
   const filtered = searchQuery
@@ -28,12 +31,23 @@ export default function IrrigationAreasPage() {
   useEffect(() => {
     if (!typeId) return;
     (async () => {
-      const [typeRes, areasRes] = await Promise.all([
+      let areasQuery = supabase
+        .from("irrigation_areas")
+        .select("*, documents(status)")
+        .eq("irrigation_type_id", typeId);
+      if (selectedYear) areasQuery = areasQuery.eq("tahun_anggaran", Number(selectedYear));
+      areasQuery = areasQuery.order("name");
+
+      const [typeRes, areasRes, yearsRes] = await Promise.all([
         supabase.from("irrigation_types").select("name").eq("id", typeId).maybeSingle(),
-        supabase.from("irrigation_areas").select("*, documents(status)").eq("irrigation_type_id", typeId).order("name"),
+        areasQuery,
+        supabase.from("irrigation_areas").select("tahun_anggaran").eq("irrigation_type_id", typeId).not("tahun_anggaran", "is", null),
       ]);
       setIrrigationType(typeRes.data);
       setAreas(areasRes.data || []);
+      const years = Array.from(new Set((yearsRes.data || []).map((d) => d.tahun_anggaran))) as number[];
+      years.sort((a, b) => b - a);
+      setAvailableYears(years);
 
       const { data: menus } = await supabase.from("menu_kegiatan").select("id, slug");
       if (menus) {
@@ -50,7 +64,7 @@ export default function IrrigationAreasPage() {
 
       setLoading(false);
     })();
-  }, [typeId]);
+  }, [typeId, selectedYear]);
 
   const setStatus = async (areaId: string, status: string) => {
     setUpdating(areaId);
@@ -77,9 +91,22 @@ export default function IrrigationAreasPage() {
         </div>
       </div>
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Cari daerah irigasi..." className="pl-10" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+      <div className="flex flex-wrap items-center gap-3">
+        <Select value={selectedYear} onValueChange={setSelectedYear}>
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder="Semua Tahun" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Semua Tahun</SelectItem>
+            {availableYears.map((y) => (
+              <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Cari daerah irigasi..." className="pl-10" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+        </div>
       </div>
 
       <div className="grid gap-3">

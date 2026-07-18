@@ -140,33 +140,56 @@ export default function DashboardPage() {
         <>
           <div>
             <h2 className="text-lg font-semibold mb-3">Daerah Irigasi</h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <StatsCard icon={MapPin} label="Total Daerah Irigasi" value={totalAreas} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              {typeBreakdown.map((t) => (
+                <Card key={t.id} className="bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-lg text-emerald-800 dark:text-emerald-300">{t.name}</h3>
+                      <MapPin className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-emerald-700 dark:text-emerald-400">Jumlah</span>
+                        <span className="font-medium text-emerald-800 dark:text-emerald-300">{t.area_count}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-emerald-700 dark:text-emerald-400">Disetujui</span>
+                        <span className="font-medium text-green-600">{t.approved_count}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-emerald-700 dark:text-emerald-400">Stock Program</span>
+                        <span className="font-medium text-amber-600">{t.stock_count}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
 
           <div>
             <h2 className="text-lg font-semibold mb-3">Status Dokumen</h2>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Card className="border-amber-200 dark:border-amber-900">
-                <CardContent className="p-4 flex items-center gap-3" style={{ backgroundColor: "rgba(251, 191, 36, 0.08)" }}>
+              <Card className="bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900">
+                <CardContent className="p-4 flex items-center gap-3">
                   <div className="rounded-lg bg-amber-100 dark:bg-amber-900/30 p-2.5">
                     <FileText className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Menunggu Review</p>
-                    <p className="text-2xl font-bold">{docReview}</p>
+                    <p className="text-sm text-amber-700 dark:text-amber-400">Menunggu Review</p>
+                    <p className="text-2xl font-bold text-amber-800 dark:text-amber-300">{docReview}</p>
                   </div>
                 </CardContent>
               </Card>
-              <Card className="border-green-200 dark:border-green-900">
-                <CardContent className="p-4 flex items-center gap-3" style={{ backgroundColor: "rgba(34, 197, 94, 0.08)" }}>
+              <Card className="bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-900">
+                <CardContent className="p-4 flex items-center gap-3">
                   <div className="rounded-lg bg-green-100 dark:bg-green-900/30 p-2.5">
                     <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Sesuai</p>
-                    <p className="text-2xl font-bold">{docApproved}</p>
+                    <p className="text-sm text-green-700 dark:text-green-400">Sesuai</p>
+                    <p className="text-2xl font-bold text-green-800 dark:text-green-300">{docApproved}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -177,9 +200,9 @@ export default function DashboardPage() {
             <h2 className="text-lg font-semibold mb-3">Status Usulan</h2>
             <div className="grid gap-4 sm:grid-cols-2">
               {typeBreakdown.map((t) => (
-                <Card key={t.id} className="border-slate-200 dark:border-slate-800">
-                  <CardContent className="p-4" style={{ backgroundColor: "rgba(100, 116, 139, 0.05)" }}>
-                    <p className="font-medium mb-3">{t.name}</p>
+                <Card key={t.id} className="bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800">
+                  <CardContent className="p-4">
+                    <p className="font-medium mb-3 text-slate-700 dark:text-slate-300">{t.name}</p>
                     <div className="flex gap-4">
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="h-4 w-4 text-green-600" />
@@ -199,39 +222,39 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Card className="border-blue-200 dark:border-blue-900">
-              <CardContent className="p-4 flex items-center gap-3" style={{ backgroundColor: "rgba(59, 130, 246, 0.08)" }}>
+            <Card className="bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900">
+              <CardContent className="p-4 flex items-center gap-3">
                 <div className="rounded-lg bg-blue-100 dark:bg-blue-900/30 p-2.5">
                   <Wallet className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Pagu (Rp)</p>
-                  <p className="text-xl font-bold">{formatRp(totalPagu)}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Disetujui: {formatRp(approvedPagu)}</p>
+                  <p className="text-sm text-blue-700 dark:text-blue-400">Total Pagu (Rp)</p>
+                  <p className="text-xl font-bold text-blue-800 dark:text-blue-300">{formatRp(totalPagu)}</p>
+                  <p className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-0.5">Disetujui: {formatRp(approvedPagu)}</p>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-emerald-200 dark:border-emerald-900">
-              <CardContent className="p-4 flex items-center gap-3" style={{ backgroundColor: "rgba(16, 185, 129, 0.08)" }}>
+            <Card className="bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900">
+              <CardContent className="p-4 flex items-center gap-3">
                 <div className="rounded-lg bg-emerald-100 dark:bg-emerald-900/30 p-2.5">
                   <Ruler className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Outcome (Ha)</p>
-                  <p className="text-xl font-bold">{totalOutcome.toLocaleString("id-ID")} Ha</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Disetujui: {approvedOutcome.toLocaleString("id-ID")} Ha</p>
+                  <p className="text-sm text-emerald-700 dark:text-emerald-400">Total Outcome (Ha)</p>
+                  <p className="text-xl font-bold text-emerald-800 dark:text-emerald-300">{totalOutcome.toLocaleString("id-ID")} Ha</p>
+                  <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70 mt-0.5">Disetujui: {approvedOutcome.toLocaleString("id-ID")} Ha</p>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-purple-200 dark:border-purple-900">
-              <CardContent className="p-4 flex items-center gap-3" style={{ backgroundColor: "rgba(168, 85, 247, 0.08)" }}>
+            <Card className="bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-900">
+              <CardContent className="p-4 flex items-center gap-3">
                 <div className="rounded-lg bg-purple-100 dark:bg-purple-900/30 p-2.5">
                   <Ruler className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Output (Km)</p>
-                  <p className="text-xl font-bold">{totalOutputKm.toLocaleString("id-ID")} Km</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Disetujui: {approvedOutputKm.toLocaleString("id-ID")} Km</p>
+                  <p className="text-sm text-purple-700 dark:text-purple-400">Total Output (Km)</p>
+                  <p className="text-xl font-bold text-purple-800 dark:text-purple-300">{totalOutputKm.toLocaleString("id-ID")} Km</p>
+                  <p className="text-xs text-purple-600/70 dark:text-purple-400/70 mt-0.5">Disetujui: {approvedOutputKm.toLocaleString("id-ID")} Km</p>
                 </div>
               </CardContent>
             </Card>

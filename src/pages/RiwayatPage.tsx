@@ -99,8 +99,8 @@ export default function RiwayatPage() {
                   <TableHead className="text-right">Outcome (Ha)</TableHead>
                   <TableHead className="text-right">Output (Km)</TableHead>
                   <TableHead className="text-right">Pagu (Rp)</TableHead>
-                  <TableHead>Status Verifikasi</TableHead>
-                  <TableHead>Keterangan</TableHead>
+                  <TableHead>Jenis Usulan</TableHead>
+                  <TableHead>Status Usulan</TableHead>
                   <TableHead className="text-right">Dokumen</TableHead>
                 </TableRow>
               </TableHeader>

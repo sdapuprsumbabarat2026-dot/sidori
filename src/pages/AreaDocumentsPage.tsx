@@ -61,8 +61,8 @@ async function compressImageIfNeeded(file: File): Promise<File> {
   if (!file.type.startsWith("image/") || file.type === "image/svg+xml") return file;
 
   const isPng = file.type === "image/png";
-  const MAX_DIMENSION = 1920;
-  const QUALITY = 0.75;
+  const MAX_DIMENSION = 1200;
+  const QUALITY = 0.5;
 
   const imgUrl = URL.createObjectURL(file);
   try {
@@ -129,6 +129,8 @@ export default function AreaDocumentsPage() {
   const uploadCategoryRef = useRef(uploadCategory);
   uploadCategoryRef.current = uploadCategory;
   const [uploadYear, setUploadYear] = useState(CURRENT_YEAR.toString());
+  const [selectedYear, setSelectedYear] = useState("");
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -165,18 +167,26 @@ export default function AreaDocumentsPage() {
     } else {
       catQuery = supabase.from("kategori_dokumen").select("*").order("sort_order");
     }
-    const [catRes, docRes] = await Promise.all([
+
+    let docQuery = supabase
+      .from("documents")
+      .select("*, kategori_dokumen(name), uploader:users!documents_uploaded_by_fkey(name)")
+      .eq("irrigation_area_id", id);
+    if (selectedYear) docQuery = docQuery.eq("year", Number(selectedYear));
+    docQuery = docQuery.order("created_at", { ascending: false });
+
+    const [catRes, docRes, yearsRes] = await Promise.all([
       catQuery,
-      supabase
-        .from("documents")
-        .select("*, kategori_dokumen(name), uploader:users!documents_uploaded_by_fkey(name)")
-        .eq("irrigation_area_id", id)
-        .order("created_at", { ascending: false }),
+      docQuery,
+      supabase.from("documents").select("year").eq("irrigation_area_id", id).not("year", "is", null),
     ]);
     setCategories(catRes.data || []);
     setDocuments(docRes.data || []);
+    const years = Array.from(new Set((yearsRes.data || []).map((d) => d.year))) as number[];
+    years.sort((a, b) => b - a);
+    setAvailableYears(years);
     setLoading(false);
-  }, [id]);
+  }, [id, selectedYear]);
 
   useEffect(() => { loadData() }, [loadData]);
 
@@ -221,11 +231,7 @@ export default function AreaDocumentsPage() {
   const cancelUpload = useCallback(async () => {
     if (uploadedFileId) {
       try {
-        await fetch(GAS_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({ _method: "DELETE", apiKey: GAS_API_KEY, fileId: uploadedFileId }),
-        });
+        navigator.sendBeacon(GAS_URL, new URLSearchParams({ _method: "DELETE", apiKey: GAS_API_KEY, fileId: uploadedFileId }));
       } catch { /* ignore */ }
     }
     removeDragFile();
@@ -257,23 +263,22 @@ export default function AreaDocumentsPage() {
         irigationType: area.irrigation_types?.name || "", areaName: area.name, year: uploadYear,
       });
 
-      const result = await new Promise<any>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        const timer = setTimeout(() => { xhr.abort(); reject(new Error("Upload timeout")); }, 300000);
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) setUploadProgress(30 + Math.round((e.loaded / e.total) * 55));
-        };
-        xhr.onload = () => {
-          clearTimeout(timer);
-          try { resolve(JSON.parse(xhr.responseText)); }
-          catch { reject(new Error("Invalid response")); }
-        };
-        xhr.onerror = () => { clearTimeout(timer); reject(new Error("Network error")); };
-        xhr.onabort = () => { clearTimeout(timer); reject(new Error("Upload dibatalkan")); };
-        xhr.open("POST", GAS_URL);
-        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-        xhr.send(body.toString());
-      });
+      setUploadProgress(40);
+      const sim = setInterval(() => setUploadProgress((p) => Math.min(p + 1, 95)), 500);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 300000);
+      let result: any;
+      try {
+        const res = await fetch(GAS_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: body.toString(),
+          signal: controller.signal,
+        });
+        clearTimeout(timer);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        result = await res.json();
+      } finally { clearInterval(sim) }
 
       if (!result.success) throw new Error(result.error || "unknown");
       setUploadedUrl(result.fileUrl);
@@ -296,11 +301,7 @@ export default function AreaDocumentsPage() {
     const existing = existingDocForCategory(uploadCategory);
     if (existing) {
       if (existing.file_id) {
-        await fetch(GAS_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({ _method: "DELETE", apiKey: GAS_API_KEY, fileId: existing.file_id }),
-        }).catch(() => {});
+        navigator.sendBeacon(GAS_URL, new URLSearchParams({ _method: "DELETE", apiKey: GAS_API_KEY, fileId: existing.file_id }));
       }
       await supabase.from("document_activity_log").insert({
         irrigation_area_id: id, file_name: existing.file_name,
@@ -338,13 +339,7 @@ export default function AreaDocumentsPage() {
 
   const handleDelete = async (doc: any) => {
     if (doc.file_id) {
-      try {
-        await fetch(GAS_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({ _method: "DELETE", apiKey: GAS_API_KEY, fileId: doc.file_id }),
-        });
-      } catch { /* ignore */ }
+      navigator.sendBeacon(GAS_URL, new URLSearchParams({ _method: "DELETE", apiKey: GAS_API_KEY, fileId: doc.file_id }));
     }
     await supabase.from("document_activity_log").insert({
       irrigation_area_id: id,
@@ -379,6 +374,17 @@ export default function AreaDocumentsPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
+        <Select value={selectedYear} onValueChange={setSelectedYear}>
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder="Semua Tahun" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Semua Tahun</SelectItem>
+            {availableYears.map((y) => (
+              <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -450,7 +456,7 @@ export default function AreaDocumentsPage() {
                             )}
                           </p>
                         </div>
-                        <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={removeDragFile}>
+                        <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={cancelUpload}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -459,7 +465,7 @@ export default function AreaDocumentsPage() {
                     <div className="border rounded-lg p-6 text-center bg-muted/30">
                       <Loader2 className="h-8 w-8 mx-auto mb-3 animate-spin text-primary" />
                       <p className="text-sm font-medium">
-                        {uploadProgress < 10 ? "Mengompres..." : uploadProgress < 30 ? "Mengenkripsi..." : `Mengupload... ${uploadProgress}%`}
+                        {uploadProgress < 40 ? "Mengompres..." : `Mengupload... (${formatSize(dragFile!.size)})`}
                       </p>
                       <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
                         <div className="h-full bg-primary rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />

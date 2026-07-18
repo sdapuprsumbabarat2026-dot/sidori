@@ -52,13 +52,7 @@ export default function AdminReviewPage() {
   const handleReview = async (doc: any, status: "approved" | "rejected", notes?: string) => {
     setMoving(doc.id);
     if (status === "rejected" && doc.file_id) {
-      try {
-        await fetch(GAS_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({ _method: "DELETE", apiKey: GAS_API_KEY, fileId: doc.file_id }),
-        });
-      } catch { /* cleanup handled by admin */ }
+      navigator.sendBeacon(GAS_URL, new URLSearchParams({ _method: "DELETE", apiKey: GAS_API_KEY, fileId: doc.file_id }));
     }
     await supabase.rpc("admin_review_document", {
       p_doc_id: doc.id,
@@ -125,20 +119,20 @@ export default function AdminReviewPage() {
               const ib = irrigationTypeOrder.indexOf(b);
               return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
             })
-            .map(([irrType, areas]) => (
+            .map(([irrType, areas]: [string, Record<string, any[]>]) => (
               <div key={irrType}>
                 <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
                   <FolderOpen className="h-5 w-5 text-muted-foreground" />
                   {irrType}
                 </h2>
                 <div className="space-y-4 pl-4">
-                  {Object.entries(areas as Record<string, any[]>).map(([irrArea, areaDocs]) => (
+                  {Object.entries(areas).map(([irrArea, areaDocs]) => (
                     <div key={irrArea}>
                       <h3 className="text-sm font-medium text-muted-foreground mb-2">
                         DI. {irrArea}
                       </h3>
                       <div className="grid gap-3">
-                        {(areaDocs as any[]).map((doc) => (
+                        {areaDocs.map((doc) => (
                           <Card key={doc.id}>
                             <CardContent className="py-4">
                               <div className="flex items-start justify-between gap-4">

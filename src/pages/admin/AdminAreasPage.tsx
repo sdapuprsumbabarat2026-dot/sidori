@@ -156,7 +156,7 @@ function AreaForm({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Status Verifikasi</Label>
+            <Label>Jenis Usulan</Label>
             <Select value={form.statusVerifikasi} onValueChange={setField("statusVerifikasi")}>
               <SelectTrigger><SelectValue placeholder="Pilih status" /></SelectTrigger>
               <SelectContent>

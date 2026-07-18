@@ -5,6 +5,7 @@ import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { StatusBadge } from "../components/StatusBadge";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../components/ui/select";
 import { useAuthStore } from "../store/authStore";
 import { ListChecks, MapPin, Search, Loader2, CheckCircle2, Archive, ExternalLink, XCircle, AlertCircle } from "lucide-react";
 
@@ -15,15 +16,18 @@ export default function UsulanPage() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedYear, setSelectedYear] = useState("");
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
 
   const isAdmin = user?.role === "super_admin";
 
   const load = async () => {
-    const { data } = await supabase
+    let query = supabase
       .from("irrigation_areas")
-      .select("*, irrigation_types(name), documents(status)")
-      .order("name");
+      .select("*, irrigation_types(name), documents(status)");
+    if (selectedYear) query = query.eq("tahun_anggaran", Number(selectedYear));
+    const { data } = await query.order("name");
     if (data) setAreas(data);
 
     const { data: menus } = await supabase.from("menu_kegiatan").select("id, slug");
@@ -39,12 +43,20 @@ export default function UsulanPage() {
       setCategoryCounts(counts);
     }
 
+    const { data: yearsData } = await supabase
+      .from("irrigation_areas")
+      .select("tahun_anggaran")
+      .not("tahun_anggaran", "is", null);
+    const years = Array.from(new Set((yearsData || []).map((d) => d.tahun_anggaran))) as number[];
+    years.sort((a, b) => b - a);
+    setAvailableYears(years);
+
     setLoading(false);
   };
 
   useEffect(() => {
     load();
-  }, []);
+  }, [selectedYear]);
 
   const setStatus = async (areaId: string, status: string) => {
     setUpdating(areaId);
@@ -94,9 +106,22 @@ export default function UsulanPage() {
         <p className="text-muted-foreground">Daftar daerah irigasi yang siap ditentukan statusnya.</p>
       </div>
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Cari daerah irigasi..." className="pl-10" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+      <div className="flex flex-wrap items-center gap-3">
+        <Select value={selectedYear} onValueChange={setSelectedYear}>
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder="Semua Tahun" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Semua Tahun</SelectItem>
+            {availableYears.map((y) => (
+              <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="relative max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Cari daerah irigasi..." className="pl-10" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+        </div>
       </div>
 
       <div>
