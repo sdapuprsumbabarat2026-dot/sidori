@@ -42,6 +42,7 @@ export default function RiwayatPage() {
   }, [year]);
 
   const totalOutcome = areas.reduce((acc, a) => acc + (Number(a.outcome_ha) || 0), 0);
+  const totalOutputKm = areas.reduce((acc, a) => acc + (Number(a.output_km) || 0), 0);
   const totalPagu = areas.reduce((acc, a) => acc + (Number(a.pagu_rp) || 0), 0);
 
   const formatRp = (v: number) =>
@@ -96,7 +97,9 @@ export default function RiwayatPage() {
                   <TableHead>Kecamatan</TableHead>
                   <TableHead>Desa</TableHead>
                   <TableHead className="text-right">Outcome (Ha)</TableHead>
+                  <TableHead className="text-right">Output (Km)</TableHead>
                   <TableHead className="text-right">Pagu (Rp)</TableHead>
+                  <TableHead>Status Verifikasi</TableHead>
                   <TableHead>Keterangan</TableHead>
                   <TableHead className="text-right">Dokumen</TableHead>
                 </TableRow>
@@ -111,10 +114,21 @@ export default function RiwayatPage() {
                     <TableCell>{a.kecamatan || "-"}</TableCell>
                     <TableCell>{a.desa || "-"}</TableCell>
                     <TableCell className="text-right">{a.outcome_ha ? Number(a.outcome_ha).toLocaleString("id-ID") : "-"}</TableCell>
+                    <TableCell className="text-right">{a.output_km ? Number(a.output_km).toLocaleString("id-ID") : "-"}</TableCell>
                     <TableCell className="text-right">{a.pagu_rp ? formatRp(Number(a.pagu_rp)) : "-"}</TableCell>
+                    <TableCell>
+                      {a.status_verifikasi === "usulan_baru"
+                        ? "Usulan Baru"
+                        : a.status_verifikasi === "stock_program"
+                          ? "Stock Program"
+                          : "-"}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <StatusBadge status={a.status} />
+                        {a.status === "stock_program" && (
+                          <span className="text-xs text-muted-foreground italic">Dijadikan Stock Program</span>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
@@ -125,8 +139,9 @@ export default function RiwayatPage() {
                 <TableRow className="font-semibold bg-muted/30">
                   <TableCell colSpan={6} className="text-right">Total</TableCell>
                   <TableCell className="text-right">{totalOutcome.toLocaleString("id-ID")}</TableCell>
+                  <TableCell className="text-right">{totalOutputKm.toLocaleString("id-ID")}</TableCell>
                   <TableCell className="text-right">{formatRp(totalPagu)}</TableCell>
-                  <TableCell colSpan={2} />
+                  <TableCell colSpan={3} />
                 </TableRow>
               </TableBody>
             </Table>
