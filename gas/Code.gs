@@ -12,7 +12,7 @@ function doPost(e) {
   if (params && params._method === "MOVE") return handleMove(params)
 
   try {
-    const data = JSON.parse(e.postData.contents)
+    const data = params
     if (data.apiKey !== API_KEY) return sendJson({ error: "Invalid API key" }, 403)
 
     const { fileBase64, fileName, mimeType, year, irigationType, areaName } = data

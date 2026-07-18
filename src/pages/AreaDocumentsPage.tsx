@@ -263,24 +263,20 @@ export default function AreaDocumentsPage() {
         year: uploadYear,
       });
 
-      const result = await new Promise<any>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        const timer = setTimeout(() => { xhr.abort(); reject(new Error("Upload timeout")); }, 300000);
-
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) setUploadProgress(30 + Math.round((e.loaded / e.total) * 55));
-        };
-        xhr.onload = () => {
-          clearTimeout(timer);
-          try { resolve(JSON.parse(xhr.responseText)); }
-          catch { reject(new Error("Invalid response")); }
-        };
-        xhr.onerror = () => { clearTimeout(timer); reject(new Error("Network error")); };
-        xhr.onabort = () => { clearTimeout(timer); reject(new Error("Upload dibatalkan")); };
-        xhr.open("POST", GAS_URL);
-        xhr.setRequestHeader("Content-Type", "text/plain");
-        xhr.send(payload);
+      const controller = new AbortController();
+      const timer = setTimeout(() => { controller.abort(); }, 300000);
+      setUploadProgress(85);
+      const res = await fetch(GAS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          apiKey: GAS_API_KEY, fileBase64, fileName: toUpload.name, mimeType: toUpload.type,
+          irigationType: area.irrigation_types?.name || "", areaName: area.name, year: uploadYear,
+        }),
+        signal: controller.signal,
       });
+      clearTimeout(timer);
+      const result = await res.json();
 
       setUploadProgress(95);
       if (!result.success) {
@@ -470,14 +466,11 @@ export default function AreaDocumentsPage() {
                     <div className="border rounded-lg p-6 text-center bg-muted/30">
                       <Loader2 className="h-8 w-8 mx-auto mb-3 animate-spin text-primary" />
                       <p className="text-sm font-medium">
-                        {uploadProgress < 30 ? "Mengompres..." : `Mengupload ke Google Drive... ${uploadProgress}%`}
+                        {uploadProgress < 30 ? "Mengompres..." : uploadProgress < 85 ? "Mengupload ke Google Drive..." : "Menyimpan ke Google Drive..."}
                       </p>
                       <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
-                        <div className="h-full bg-primary rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                        <div className="h-full bg-primary rounded-full transition-all duration-300" style={{ width: `${Math.min(uploadProgress, 95)}%` }} />
                       </div>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {uploadProgress < 85 ? "Mengirim data ke server..." : "Menyimpan ke Google Drive..."}
-                      </p>
                     </div>
                   ) : uploadPhase === "error" ? (
                     <div className="border rounded-lg p-6 text-center bg-destructive/5 border border-destructive/30">
