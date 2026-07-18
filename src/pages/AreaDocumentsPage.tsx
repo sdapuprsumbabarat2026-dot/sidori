@@ -384,32 +384,6 @@ export default function AreaDocumentsPage() {
         </div>
       </div>
 
-      {categories.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-          {categories.map((cat) => {
-            const existing = existingDocForCategory(cat.id);
-            return (
-              <Card key={cat.id} className={existing ? "" : "border-dashed"}>
-                <CardContent className="py-2.5 px-4 flex items-center gap-3">
-                  <div className={`rounded-full p-1 shrink-0 ${existing ? "bg-green-100 dark:bg-green-900" : "bg-muted"}`}>
-                    {existing ? <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400" /> : <Circle className="h-3.5 w-3.5 text-muted-foreground" />}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className={`text-sm font-medium truncate ${existing ? "" : "text-muted-foreground"}`}>{cat.name}</p>
-                    {existing ? (
-                      <p className="text-xs text-green-600 dark:text-green-400 truncate">{existing.file_name}</p>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">Belum diupload</p>
-                    )}
-                  </div>
-                  <div className="shrink-0">{existing && <StatusBadge status={existing.status} />}</div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
-
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -569,11 +543,43 @@ export default function AreaDocumentsPage() {
       <div className="grid gap-3">
         {filteredDocs.length === 0 ? (
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <FileText className="h-12 w-12 mb-3 opacity-50" />
-              <p>{searchQuery ? "Dokumen tidak ditemukan" : "Belum ada dokumen"}</p>
-              {!searchQuery && (
-                <Button variant="link" onClick={() => setDialogOpen(true)}>Upload dokumen pertama</Button>
+            <CardContent className="py-8 text-muted-foreground">
+              {searchQuery ? (
+                <div className="flex flex-col items-center justify-center py-6">
+                  <FileText className="h-12 w-12 mb-3 opacity-50" />
+                  <p>Dokumen tidak ditemukan</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <FileText className="h-12 w-12 mb-3 opacity-50" />
+                    <p>Belum ada dokumen</p>
+                    <Button variant="link" onClick={() => setDialogOpen(true)}>Upload dokumen pertama</Button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {categories.map((cat) => {
+                      const existing = existingDocForCategory(cat.id);
+                      return (
+                        <Card key={cat.id} className={existing ? "" : "border-dashed"}>
+                          <CardContent className="py-2.5 px-4 flex items-center gap-3">
+                            <div className={`rounded-full p-1 shrink-0 ${existing ? "bg-green-100 dark:bg-green-900" : "bg-muted"}`}>
+                              {existing ? <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400" /> : <Circle className="h-3.5 w-3.5 text-muted-foreground" />}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className={`text-sm font-medium truncate ${existing ? "" : "text-muted-foreground"}`}>{cat.name}</p>
+                              {existing ? (
+                                <p className="text-xs text-green-600 dark:text-green-400 truncate">{existing.file_name}</p>
+                              ) : (
+                                <p className="text-xs text-muted-foreground">Belum diupload</p>
+                              )}
+                            </div>
+                            <div className="shrink-0">{existing && <StatusBadge status={existing.status} />}</div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
