@@ -142,7 +142,7 @@ export default function AreaDocumentsPage() {
     ? documents.filter(
         (d) =>
           d.file_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          d.document_categories?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          d.kategori_dokumen?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           d.year?.toString().includes(searchQuery)
       )
     : documents;
@@ -176,7 +176,7 @@ export default function AreaDocumentsPage() {
       catQuery,
       supabase
         .from("documents")
-        .select("*, document_categories(name), uploader:users!documents_uploaded_by_fkey(name)")
+        .select("*, kategori_dokumen(name), uploader:users!documents_uploaded_by_fkey(name)")
         .eq("irrigation_area_id", id)
         .order("created_at", { ascending: false }),
     ]);
@@ -353,7 +353,7 @@ export default function AreaDocumentsPage() {
     await supabase.from("document_activity_log").insert({
       irrigation_area_id: id,
       file_name: doc.file_name,
-      category_name: doc.document_categories?.name,
+      category_name: doc.kategori_dokumen?.name,
       action: "delete",
       performed_by: user?.id,
     });
@@ -558,7 +558,7 @@ export default function AreaDocumentsPage() {
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
                             <p className="font-medium truncate">{doc.file_name}</p>
-                            <p className="text-xs text-muted-foreground">{doc.document_categories?.name}</p>
+                            <p className="text-xs text-muted-foreground">{doc.kategori_dokumen?.name}</p>
                           </div>
                           <StatusBadge status={doc.status} />
                         </div>

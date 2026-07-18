@@ -40,7 +40,7 @@ export default function AdminReviewPage() {
   const loadDocs = async () => {
     const { data } = await supabase
       .from("documents")
-      .select("*, irrigation_areas!inner(name, irrigation_types!inner(name)), document_categories(name), uploader:users!documents_uploaded_by_fkey(name)")
+      .select("*, irrigation_areas!inner(name, irrigation_types!inner(name)), kategori_dokumen(name), uploader:users!documents_uploaded_by_fkey(name)")
       .eq("status", "review")
       .order("created_at", { ascending: false });
     if (data) setDocs(data);
@@ -69,7 +69,7 @@ export default function AdminReviewPage() {
     await supabase.from("document_activity_log").insert({
       irrigation_area_id: doc.irrigation_area_id,
       file_name: doc.file_name,
-      category_name: doc.document_categories?.name,
+      category_name: doc.kategori_dokumen?.name,
       action: status,
       performed_by: user?.id,
       notes: notes || null,
@@ -148,7 +148,7 @@ export default function AdminReviewPage() {
                                     <p className="font-medium truncate">{doc.file_name}</p>
                                   </div>
                                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                                    <span>{doc.document_categories?.name}</span>
+                                    <span>{doc.kategori_dokumen?.name}</span>
                                     {doc.year && <span>Tahun {doc.year}</span>}
                                     <span>{formatFileSize(doc.file_size)}</span>
                                   </div>
