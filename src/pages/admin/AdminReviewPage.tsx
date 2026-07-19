@@ -132,95 +132,129 @@ export default function AdminReviewPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-8">
-          {(Object.entries(grouped) as [string, Record<string, any[]>][])
-            .sort(([a], [b]) => {
-              const ia = irrigationTypeOrder.indexOf(a);
-              const ib = irrigationTypeOrder.indexOf(b);
-              return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
-            })
-            .map(([irrType, areas]) => (
-              <div key={irrType}>
-                <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                  <FolderOpen className="h-5 w-5 text-muted-foreground" />
-                  {irrType}
-                </h2>
-                <div className="space-y-4 sm:pl-4">
-                  {Object.entries(areas).map(([irrArea, areaDocs]) => (
-                    <div key={irrArea}>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                        {irrArea}
-                      </h3>
-                      <div className="grid gap-3">
-                        {areaDocs.map((doc) => (
-                          <Card key={doc.id}>
-                            <CardContent className="py-3 sm:py-4">
-                              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                                    <p className="font-medium truncate">{doc.file_name}</p>
-                                  </div>
-                                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                                    <span>{doc.kategori_dokumen?.name}</span>
-                                    {doc.year && <span>Tahun {doc.year}</span>}
-                                    <span>{formatFileSize(doc.file_size)}</span>
-                                  </div>
-                                  {doc.uploader?.name && (
-                                    <p className="text-xs text-muted-foreground mt-1">Diupload oleh {doc.uploader.name}</p>
-                                  )}
-                                </div>
-                                <div className="flex items-stretch gap-2 sm:items-center sm:gap-1 sm:shrink-0">
-                                  <Button variant="outline" size="sm" className="flex-1 sm:flex-none px-2" asChild>
-                                    <a href={doc.file_url} target="_blank" rel="noopener noreferrer">
-                                      <Eye className="h-4 w-4 sm:mr-0" />
-                                      <span className="sm:hidden ml-1">Lihat</span>
-                                    </a>
-                                  </Button>
-                                  <Button variant="outline" size="sm" className="flex-1 sm:flex-none text-green-600" disabled={moving === doc.id} onClick={() => handleReview(doc, "approved")}>
-                                    {moving === doc.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
-                                    <span className="sm:ml-1 ml-1">Sesuai</span>
-                                  </Button>
-                                  <AlertDialog open={rejectDialog.open && rejectDialog.doc?.id === doc.id} onOpenChange={(open) => setRejectDialog(open ? { open: true, doc } : { open: false, doc: null })}>
-                                    <AlertDialogTrigger asChild>
-                                      <Button variant="outline" size="sm" className="flex-1 sm:flex-none text-red-600" disabled={moving === doc.id}>
-                                        <XCircle className="h-4 w-4" />
-                                        <span className="sm:ml-1 ml-1">Tolak</span>
-                                      </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>Catatan Perbaikan</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                          Berikan catatan perbaikan untuk dokumen ini (opsional).
-                                        </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <Textarea
-                                        placeholder="Contoh: Dokumen kurang lengkap, mohon dilengkapi..."
-                                        value={rejectNote}
-                                        onChange={(e) => setRejectNote(e.target.value)}
-                                        className="min-h-[100px]"
-                                      />
-                                      <AlertDialogFooter>
-                                        <AlertDialogCancel onClick={() => { setRejectNote(""); setRejectDialog({ open: false, doc: null }); }}>Batal</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleReview(doc, "rejected", rejectNote)}>
-                                          Tolak Dokumen
-                                        </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+        <>
+          {/* Mobile: flat card list */}
+          <div className="grid gap-3 md:hidden">
+            {filteredDocs.map((doc) => (
+              <Card key={doc.id}>
+                <CardContent className="p-3">
+                  <p className="text-xs font-medium text-primary mb-1">{doc.irrigation_areas?.name}</p>
+                  <div className="flex items-center gap-2 mb-1">
+                    <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <p className="font-medium text-sm truncate">{doc.file_name}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground mb-2">
+                    <span>{doc.kategori_dokumen?.name}</span>
+                    {doc.year && <span>Tahun {doc.year}</span>}
+                    <span>{formatFileSize(doc.file_size)}</span>
+                    {doc.uploader?.name && <span>oleh {doc.uploader.name}</span>}
+                  </div>
+                  <div className="flex items-stretch gap-2">
+                    <Button variant="outline" size="sm" className="flex-1" asChild>
+                      <a href={doc.file_url} target="_blank" rel="noopener noreferrer">
+                        <Eye className="h-4 w-4 mr-1" /> Lihat
+                      </a>
+                    </Button>
+                    <Button variant="outline" size="sm" className="flex-1 text-green-600" disabled={moving === doc.id} onClick={() => handleReview(doc, "approved")}>
+                      {moving === doc.id ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <CheckCircle className="h-4 w-4 mr-1" />} Sesuai
+                    </Button>
+                    <AlertDialog open={rejectDialog.open && rejectDialog.doc?.id === doc.id} onOpenChange={(open) => setRejectDialog(open ? { open: true, doc } : { open: false, doc: null })}>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="flex-1 text-red-600" disabled={moving === doc.id}>
+                          <XCircle className="h-4 w-4 mr-1" /> Tolak
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Catatan Perbaikan</AlertDialogTitle>
+                          <AlertDialogDescription>Berikan catatan perbaikan untuk dokumen ini (opsional).</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <Textarea placeholder="Contoh: Dokumen kurang lengkap, mohon dilengkapi..." value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} className="min-h-[100px]" />
+                        <AlertDialogFooter>
+                          <AlertDialogCancel onClick={() => { setRejectNote(""); setRejectDialog({ open: false, doc: null }); }}>Batal</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleReview(doc, "rejected", rejectNote)}>Tolak Dokumen</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
-        </div>
+          </div>
+
+          {/* Desktop: grouped view */}
+          <div className="hidden md:block space-y-8">
+            {(Object.entries(grouped) as [string, Record<string, any[]>][])
+              .sort(([a], [b]) => {
+                const ia = irrigationTypeOrder.indexOf(a);
+                const ib = irrigationTypeOrder.indexOf(b);
+                return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+              })
+              .map(([irrType, areas]) => (
+                <div key={irrType}>
+                  <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <FolderOpen className="h-5 w-5 text-muted-foreground" />
+                    {irrType}
+                  </h2>
+                  <div className="space-y-4 pl-4">
+                    {Object.entries(areas).map(([irrArea, areaDocs]) => (
+                      <div key={irrArea}>
+                        <h3 className="text-sm font-medium text-muted-foreground mb-2">{irrArea}</h3>
+                        <div className="grid gap-3">
+                          {areaDocs.map((doc) => (
+                            <Card key={doc.id}>
+                              <CardContent className="py-4">
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                      <p className="font-medium truncate">{doc.file_name}</p>
+                                    </div>
+                                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                                      <span>{doc.kategori_dokumen?.name}</span>
+                                      {doc.year && <span>Tahun {doc.year}</span>}
+                                      <span>{formatFileSize(doc.file_size)}</span>
+                                    </div>
+                                    {doc.uploader?.name && <p className="text-xs text-muted-foreground mt-1">Diupload oleh {doc.uploader.name}</p>}
+                                  </div>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <Button variant="outline" size="sm" asChild>
+                                      <a href={doc.file_url} target="_blank" rel="noopener noreferrer"><Eye className="h-4 w-4" /></a>
+                                    </Button>
+                                    <Button variant="outline" size="sm" className="text-green-600" disabled={moving === doc.id} onClick={() => handleReview(doc, "approved")}>
+                                      {moving === doc.id ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <CheckCircle className="h-4 w-4 mr-1" />} Sesuai
+                                    </Button>
+                                    <AlertDialog open={rejectDialog.open && rejectDialog.doc?.id === doc.id} onOpenChange={(open) => setRejectDialog(open ? { open: true, doc } : { open: false, doc: null })}>
+                                      <AlertDialogTrigger asChild>
+                                        <Button variant="outline" size="sm" className="text-red-600" disabled={moving === doc.id}>
+                                          <XCircle className="h-4 w-4 mr-1" /> Tidak Sesuai
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Catatan Perbaikan</AlertDialogTitle>
+                                          <AlertDialogDescription>Berikan catatan perbaikan untuk dokumen ini (opsional).</AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <Textarea placeholder="Contoh: Dokumen kurang lengkap, mohon dilengkapi..." value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} className="min-h-[100px]" />
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel onClick={() => { setRejectNote(""); setRejectDialog({ open: false, doc: null }); }}>Batal</AlertDialogCancel>
+                                          <AlertDialogAction onClick={() => handleReview(doc, "rejected", rejectNote)}>Tolak Dokumen</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+          </div>
+        </>
       )}
     </div>
   );
