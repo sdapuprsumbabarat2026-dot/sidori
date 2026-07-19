@@ -15,6 +15,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "../../components/ui/alert-dialog";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../../components/ui/select";
 import { Search, CheckCircle, XCircle, Eye, FileText, Loader2, FolderOpen } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 
@@ -39,6 +40,7 @@ export default function AdminReviewPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [rejectDialog, setRejectDialog] = useState<{ open: boolean; doc: any | null }>({ open: false, doc: null });
   const [rejectNote, setRejectNote] = useState("");
+  const [filterArea, setFilterArea] = useState("");
 
   const loadDocs = async () => {
     const { data } = await supabase
@@ -77,9 +79,11 @@ export default function AdminReviewPage() {
     loadDocs();
   };
 
-  const filteredDocs = searchQuery
-    ? docs.filter((d) => d.file_name.toLowerCase().includes(searchQuery.toLowerCase()))
-    : docs;
+  const filteredDocs = docs.filter((d) => {
+    if (searchQuery && !d.file_name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (filterArea && d.irrigation_areas?.name !== filterArea) return false;
+    return true;
+  });
 
   // Group by irrigation type > irrigation area
   const grouped = filteredDocs.reduce((acc, doc) => {
@@ -100,9 +104,22 @@ export default function AdminReviewPage() {
         <p className="text-muted-foreground">Periksa dan setujui/tolak dokumen yang diupload.</p>
       </div>
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Cari dokumen..." className="pl-10" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+      <div className="flex flex-wrap items-center gap-3">
+        <Select value={filterArea} onValueChange={setFilterArea}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Semua Area" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Semua Area</SelectItem>
+            {[...new Set(docs.map((d) => d.irrigation_areas?.name).filter(Boolean))].sort().map((name) => (
+              <SelectItem key={name} value={name}>{name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Cari dokumen..." className="pl-10" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+        </div>
       </div>
 
       {loading ? (

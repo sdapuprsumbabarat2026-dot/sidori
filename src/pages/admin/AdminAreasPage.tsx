@@ -328,51 +328,44 @@ export default function AdminAreasPage() {
         <Card><CardContent className="p-0"><div className="divide-y"><div className="text-center py-8 text-muted-foreground">Belum ada daerah irigasi</div></div></CardContent></Card>
       ) : (
         (() => {
-          const filtered = filterYear ? areas.filter((a) => a.tahun_anggaran === Number(filterYear)) : areas;
-          const groupedByYear = filtered.reduce((acc: Record<string, any[]>, area) => {
-            const year = area.tahun_anggaran || "Tanpa Tahun";
-            if (!acc[year]) acc[year] = [];
-            acc[year].push(area);
-            return acc;
-          }, {} as Record<string, any[]>);
-          const sortedYears = Object.keys(groupedByYear).sort((a, b) => Number(b) - Number(a));
-          return sortedYears.map((year) => (
-            <div key={year}>
-              <h3 className="text-lg font-semibold mb-3 mt-6 first:mt-0">TA {year}</h3>
-              <Card>
-                <CardContent className="p-0">
-                  <div className="divide-y">
-                    {groupedByYear[year].map((a) => (
-                      <div key={a.id} className="flex items-center justify-between p-4 gap-3 flex-wrap">
-                        <div>
-                          <p className="font-medium">{a.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {a.irrigation_types?.name}
-                            {a.menu_kegiatan && <> &middot; {a.menu_kegiatan === "peningkatan" ? "Peningkatan" : "Pembangunan"}</>}
-                            {a.kecamatan && <> &middot; {a.kecamatan}{a.desa ? `, ${a.desa}` : ""}</>}
-                            {a.output_km != null && <> &middot; {a.output_km} Km</>}
-                            {a.status_verifikasi && <> &middot; {a.status_verifikasi === "usulan_baru" ? "Usulan Baru" : "Stock Program"}</>}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <StatusBadge status={a.status} />
-                          <Button variant="ghost" size="icon" onClick={() => openEdit(a)} title="Edit">
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => navigate(`/area/${a.id}`)} title="Lihat dokumen">
-                            <ExternalLink className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(a.id)} title="Hapus">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+          const displayAreas = filterYear ? areas.filter((a) => a.tahun_anggaran === Number(filterYear)) : areas;
+          return (
+            <Card>
+              <CardContent className="p-0">
+                <div className="divide-y">
+                  {displayAreas.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">Tidak ada daerah irigasi</div>
+                  ) : displayAreas.map((a) => (
+                    <div key={a.id} className="flex items-center justify-between p-4 gap-3 flex-wrap">
+                      <div>
+                        <p className="font-medium">{a.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {a.irrigation_types?.name}
+                          {a.tahun_anggaran && <> &middot; TA {a.tahun_anggaran}</>}
+                          {a.menu_kegiatan && <> &middot; {a.menu_kegiatan === "peningkatan" ? "Peningkatan" : "Pembangunan"}</>}
+                          {a.kecamatan && <> &middot; {a.kecamatan}{a.desa ? `, ${a.desa}` : ""}</>}
+                          {a.output_km != null && <> &middot; {a.output_km} Km</>}
+                          {a.status_verifikasi && <> &middot; {a.status_verifikasi === "usulan_baru" ? "Usulan Baru" : "Stock Program"}</>}
+                        </p>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          ));
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={a.status} />
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(a)} title="Edit">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => navigate(`/area/${a.id}`)} title="Lihat dokumen">
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(a.id)} title="Hapus">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          );
         })()
       )}
 
