@@ -141,18 +141,17 @@ export default function AdminReviewPage() {
                   <p className="text-xs font-medium text-primary">{doc.irrigation_areas?.name}</p>
                   <p className="text-sm font-medium truncate mt-0.5">{doc.file_name}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {doc.kategori_dokumen?.name}{doc.year ? ` \u00b7 ${doc.year}` : ""} \u00b7 {formatFileSize(doc.file_size)}
+                    {doc.kategori_dokumen?.name}{doc.year ? ` · ${doc.year}` : ""} · {formatFileSize(doc.file_size)}
                   </p>
                 </a>
                 <div className="flex items-stretch gap-2">
-                  <Button size="sm" className="flex-1 h-8 text-xs bg-green-600 hover:bg-green-700 text-white" disabled={moving === doc.id} onClick={() => handleReview(doc, "approved")}>
-                    {moving === doc.id ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <CheckCircle className="h-3.5 w-3.5 mr-1" />}
-                    Setujui
+                  <Button size="icon" className="w-9 h-9 bg-green-600 hover:bg-green-700 text-white shrink-0" disabled={moving === doc.id} onClick={() => handleReview(doc, "approved")}>
+                    {moving === doc.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
                   </Button>
                   <AlertDialog open={rejectDialog.open && rejectDialog.doc?.id === doc.id} onOpenChange={(open) => setRejectDialog(open ? { open: true, doc } : { open: false, doc: null })}>
                     <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="flex-1 h-8 text-xs text-red-600 border-red-300" disabled={moving === doc.id}>
-                        <XCircle className="h-3.5 w-3.5 mr-1" /> Tolak
+                      <Button size="icon" variant="outline" className="w-9 h-9 text-red-600 border-red-300 shrink-0" disabled={moving === doc.id}>
+                        <XCircle className="h-4 w-4" />
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
