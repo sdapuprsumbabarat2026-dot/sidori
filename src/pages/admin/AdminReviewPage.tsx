@@ -133,36 +133,38 @@ export default function AdminReviewPage() {
         </Card>
       ) : (
         <>
-          {/* Mobile: single-row cards */}
-          <div className="grid gap-1 md:hidden">
+          {/* Mobile: 2-line card */}
+          <div className="grid gap-1.5 md:hidden">
             {filteredDocs.map((doc) => (
-              <div key={doc.id} className="border rounded-lg px-3 py-1.5 bg-card flex items-center gap-1.5">
-                <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 flex items-baseline gap-1">
-                  <span className="text-xs text-primary font-medium shrink-0">{doc.irrigation_areas?.name}</span>
-                  <span className="text-xs text-muted-foreground truncate">{doc.file_name}</span>
-                </a>
-                <div className="flex items-center gap-0.5 shrink-0">
-                  <Button size="icon" className="w-7 h-7 bg-green-600 hover:bg-green-700 text-white" disabled={moving === doc.id} onClick={() => handleReview(doc, "approved")}>
-                    {moving === doc.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle className="h-3.5 w-3.5" />}
-                  </Button>
-                  <AlertDialog open={rejectDialog.open && rejectDialog.doc?.id === doc.id} onOpenChange={(open) => setRejectDialog(open ? { open: true, doc } : { open: false, doc: null })}>
-                    <AlertDialogTrigger asChild>
-                      <Button size="icon" variant="outline" className="w-7 h-7 text-red-600 border-red-300" disabled={moving === doc.id}>
-                        <XCircle className="h-3.5 w-3.5" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Catatan Perbaikan</AlertDialogTitle>
-                        <AlertDialogDescription>Berikan catatan perbaikan untuk dokumen ini (opsional).</AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <Textarea placeholder="Contoh: Dokumen kurang lengkap, mohon dilengkapi..." value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} className="min-h-[80px]" />
-                      <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => { setRejectNote(""); setRejectDialog({ open: false, doc: null }); }}>Batal</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleReview(doc, "rejected", rejectNote)}>Tolak Dokumen</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+              <div key={doc.id} className="border rounded-lg px-3 py-2 bg-card">
+                <div className="flex items-start justify-between gap-2">
+                  <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-primary">{doc.irrigation_areas?.name}</p>
+                    <p className="text-sm truncate mt-0.5">{doc.file_name}</p>
+                  </a>
+                  <div className="flex items-center gap-1 shrink-0 pt-0.5">
+                    <Button size="icon" className="w-9 h-9 bg-green-600 hover:bg-green-700 text-white" disabled={moving === doc.id} onClick={() => handleReview(doc, "approved")}>
+                      {moving === doc.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                    </Button>
+                    <AlertDialog open={rejectDialog.open && rejectDialog.doc?.id === doc.id} onOpenChange={(open) => { setRejectDialog(open ? { open: true, doc: doc } : { open: false, doc: null }) }}>
+                      <AlertDialogTrigger asChild>
+                        <Button size="icon" variant="outline" className="w-9 h-9 text-red-600 border-red-300" disabled={moving === doc.id}>
+                          <XCircle className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Catatan Perbaikan</AlertDialogTitle>
+                          <AlertDialogDescription>Berikan catatan perbaikan untuk dokumen ini (opsional).</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <Textarea placeholder="Contoh: Dokumen kurang lengkap, mohon dilengkapi..." value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} className="min-h-[80px]" />
+                        <AlertDialogFooter>
+                          <AlertDialogCancel onClick={() => { setRejectNote(""); setRejectDialog({ open: false, doc: null }) }}>Batal</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleReview(doc, "rejected", rejectNote)}>Tolak Dokumen</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
               </div>
             ))}

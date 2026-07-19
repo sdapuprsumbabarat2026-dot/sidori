@@ -528,73 +528,130 @@ export default function AreaDocumentsPage() {
           const existing = existingDocForCategory(cat.id);
           return (
             <Card key={cat.id} className={existing ? "" : "border-dashed"}>
-              <CardContent className="py-3 px-4 flex items-center gap-3">
-                <div className={`rounded-full p-1.5 shrink-0 ${existing ? "bg-green-100 dark:bg-green-900" : "bg-muted"}`}>
-                  {existing ? <Check className="h-4 w-4 text-green-600 dark:text-green-400" /> : <Circle className="h-4 w-4 text-muted-foreground" />}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className={`text-sm font-medium ${existing ? "" : "text-muted-foreground"}`}>{cat.name}</p>
-                  {existing ? (
-                    <div className="text-xs text-muted-foreground">
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
-                        <span className="truncate max-w-[300px]">{existing.file_name}</span>
-                        {existing.year && <span>{existing.year}</span>}
-                        <span>{formatDate(existing.created_at)}</span>
-                        <span>{formatSize(existing.file_size)}</span>
-                        {existing.uploader?.name && <span>oleh {existing.uploader.name}</span>}
-                      </div>
-                      {existing.status === "rejected" && existing.notes && (
-                        <p className="mt-1 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-2 py-1 rounded border border-red-200 dark:border-red-900">
-                          Catatan: {existing.notes}
-                        </p>
+                <CardContent className="py-3 px-4 flex items-center gap-3">
+                  <div className={`rounded-full p-1.5 shrink-0 ${existing ? "bg-green-100 dark:bg-green-900" : "bg-muted"}`}>
+                    {existing ? <Check className="h-4 w-4 text-green-600 dark:text-green-400" /> : <Circle className="h-4 w-4 text-muted-foreground" />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="md:hidden">
+                      {existing ? (
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-medium">{cat.name}</p>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <Button variant="ghost" size="icon" className="w-8 h-8" asChild title="Lihat">
+                                <a href={existing.file_url} target="_blank" rel="noopener noreferrer">
+                                  <Eye className="h-4 w-4" />
+                                </a>
+                              </Button>
+                              <StatusBadge status={existing.status} />
+                              {(user?.role === "super_admin" || (user?.role === "user" && existing.status !== "approved")) && (
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="w-8 h-8 text-destructive" title="Hapus">
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Hapus Dokumen</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Yakin ingin menghapus <strong>{existing.file_name}</strong>? Tindakan ini tidak bisa dibatalkan.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Batal</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handleDelete(existing)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                        Hapus
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              )}
+                            </div>
+                          </div>
+                          <a href={existing.file_url} target="_blank" rel="noopener noreferrer" className="block text-xs font-medium truncate hover:underline">
+                            {existing.file_name}
+                          </a>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDate(existing.created_at)} · {formatSize(existing.file_size)}
+                            {existing.uploader?.name && <> · {existing.uploader.name}</>}
+                          </p>
+                          {existing.status === "rejected" && existing.notes && (
+                            <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-2 py-1 rounded border border-red-200 dark:border-red-900">
+                              Catatan: {existing.notes}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <p className={`text-sm font-medium ${existing ? "" : "text-muted-foreground"}`}>{cat.name}</p>
+                      )}
+                      {!existing && <p className="text-xs text-muted-foreground mt-0.5">Belum diupload</p>}
+                    </div>
+                    <div className="hidden md:block">
+                      <p className={`text-sm font-medium ${existing ? "" : "text-muted-foreground"}`}>{cat.name}</p>
+                      {existing ? (
+                        <div className="text-xs text-muted-foreground">
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                            <span className="truncate max-w-[300px]">{existing.file_name}</span>
+                            {existing.year && <span>{existing.year}</span>}
+                            <span>{formatDate(existing.created_at)}</span>
+                            <span>{formatSize(existing.file_size)}</span>
+                            {existing.uploader?.name && <span>oleh {existing.uploader.name}</span>}
+                          </div>
+                          {existing.status === "rejected" && existing.notes && (
+                            <p className="mt-1 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-2 py-1 rounded border border-red-200 dark:border-red-900">
+                              Catatan: {existing.notes}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">Belum diupload</p>
                       )}
                     </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">Belum diupload</p>
-                  )}
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  {existing && (
-                    <>
-                      <Button variant="ghost" size="icon" asChild title="Lihat">
-                        <a href={existing.file_url} target="_blank" rel="noopener noreferrer">
-                          <Eye className="h-4 w-4" />
-                        </a>
-                      </Button>
-                      {existing.status !== "approved" && (
-                        <Button variant="ghost" size="icon" title="Ganti" onClick={() => { setUploadCategory(existing.category_id); setDialogOpen(true) }}>
-                          <Upload className="h-4 w-4" />
+                  </div>
+                  <div className="md:flex items-center gap-1 shrink-0 hidden">
+                    {existing && (
+                      <>
+                        <Button variant="ghost" size="icon" asChild title="Lihat">
+                          <a href={existing.file_url} target="_blank" rel="noopener noreferrer">
+                            <Eye className="h-4 w-4" />
+                          </a>
                         </Button>
-                      )}
-                      <StatusBadge status={existing.status} />
-                      {(user?.role === "super_admin" || (user?.role === "user" && existing.status !== "approved")) && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive" title="Hapus">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Hapus Dokumen</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Yakin ingin menghapus <strong>{existing.file_name}</strong>? Tindakan ini tidak bisa dibatalkan.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Batal</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(existing)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                Hapus
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                        {existing.status !== "approved" && (
+                          <Button variant="ghost" size="icon" title="Ganti" onClick={() => { setUploadCategory(existing.category_id); setDialogOpen(true) }}>
+                            <Upload className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <StatusBadge status={existing.status} />
+                        {(user?.role === "super_admin" || (user?.role === "user" && existing.status !== "approved")) && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="text-destructive" title="Hapus">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Hapus Dokumen</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Yakin ingin menghapus <strong>{existing.file_name}</strong>? Tindakan ini tidak bisa dibatalkan.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Batal</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(existing)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                  Hapus
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
           );
         })}
       </div>
