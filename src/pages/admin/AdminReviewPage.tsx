@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { Card, CardContent } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
 import { Textarea } from "../../components/ui/textarea";
 import {
   AlertDialog,
@@ -85,7 +84,6 @@ export default function AdminReviewPage() {
     return true;
   });
 
-  // Group by irrigation type > irrigation area
   const grouped = filteredDocs.reduce((acc, doc) => {
     const irrType = doc.irrigation_areas?.irrigation_types?.name || "Lainnya";
     const irrArea = doc.irrigation_areas?.name || "Lainnya";
@@ -134,32 +132,25 @@ export default function AdminReviewPage() {
       ) : (
         <>
           {/* Mobile: flat card list */}
-          <div className="grid gap-1.5 md:hidden">
+          <div className="grid gap-2 md:hidden">
             {filteredDocs.map((doc) => (
-              <div key={doc.id} className="border rounded-lg p-2.5 bg-card text-xs space-y-1">
-                <p className="text-[11px] font-medium text-primary">{doc.irrigation_areas?.name}</p>
-                <div className="flex items-center gap-1.5">
-                  <FileText className="h-3 w-3 shrink-0 text-muted-foreground" />
-                  <p className="font-medium truncate">{doc.file_name}</p>
-                </div>
-                <div className="flex flex-wrap gap-x-2 text-[11px] text-muted-foreground">
-                  <span>{doc.kategori_dokumen?.name}</span>
-                  {doc.year && <span>{doc.year}</span>}
-                  <span>{formatFileSize(doc.file_size)}</span>
-                </div>
-                <div className="flex items-stretch gap-1">
-                  <Button variant="outline" size="sm" className="flex-1 h-7 px-1 text-xs" asChild>
-                    <a href={doc.file_url} target="_blank" rel="noopener noreferrer">Lihat</a>
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1 h-7 px-1 text-xs text-green-600" disabled={moving === doc.id} onClick={() => handleReview(doc, "approved")}>
-                    {moving === doc.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle className="h-3 w-3" />}
-                    <span className="ml-0.5">Sesuai</span>
+              <div key={doc.id} className="border rounded-lg p-3 bg-card">
+                <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="block mb-2">
+                  <p className="text-xs font-medium text-primary">{doc.irrigation_areas?.name}</p>
+                  <p className="text-sm font-medium truncate mt-0.5">{doc.file_name}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {doc.kategori_dokumen?.name}{doc.year ? ` · ${doc.year}` : ""} · {formatFileSize(doc.file_size)}
+                  </p>
+                </a>
+                <div className="flex items-stretch gap-2">
+                  <Button size="sm" className="flex-1 h-8 text-xs bg-green-600 hover:bg-green-700 text-white" disabled={moving === doc.id} onClick={() => handleReview(doc, "approved")}>
+                    {moving === doc.id ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <CheckCircle className="h-3.5 w-3.5 mr-1" />}
+                    Setujui
                   </Button>
                   <AlertDialog open={rejectDialog.open && rejectDialog.doc?.id === doc.id} onOpenChange={(open) => setRejectDialog(open ? { open: true, doc } : { open: false, doc: null })}>
                     <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="flex-1 h-7 px-1 text-xs text-red-600" disabled={moving === doc.id}>
-                        <XCircle className="h-3 w-3" />
-                        <span className="ml-0.5">Tolak</span>
+                      <Button variant="outline" size="sm" className="flex-1 h-8 text-xs text-red-600 border-red-300" disabled={moving === doc.id}>
+                        <XCircle className="h-3.5 w-3.5 mr-1" /> Tolak
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
