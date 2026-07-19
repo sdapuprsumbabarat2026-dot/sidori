@@ -516,7 +516,7 @@ export default function AreaDocumentsPage() {
         </Dialog>
       </div>
 
-      <div className="grid gap-3">
+      <div className="grid grid-cols-1 gap-3">
         {filteredCategories.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -536,8 +536,8 @@ export default function AreaDocumentsPage() {
                     <div className="md:hidden">
                       {existing ? (
                         <div className="space-y-1.5">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-sm font-medium">{cat.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium flex-1 min-w-0 truncate">{cat.name}</p>
                             <div className="flex items-center gap-1 shrink-0">
                               <Button variant="ghost" size="icon" className="w-8 h-8" asChild title="Lihat">
                                 <a href={existing.file_url} target="_blank" rel="noopener noreferrer">

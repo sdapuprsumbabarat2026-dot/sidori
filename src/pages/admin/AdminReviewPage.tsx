@@ -134,7 +134,7 @@ export default function AdminReviewPage() {
       ) : (
         <>
           {/* Mobile: 2-line card */}
-          <div className="grid gap-1.5 md:hidden">
+          <div className="grid grid-cols-1 gap-1.5 md:hidden">
             {filteredDocs.map((doc) => (
               <div key={doc.id} className="border rounded-lg px-3 py-2 bg-card">
                 <div className="flex items-start justify-between gap-2">
