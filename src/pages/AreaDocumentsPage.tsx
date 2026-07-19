@@ -53,7 +53,7 @@ function formatSize(bytes: number) {
 }
 
 function formatDate(ts: string) {
-  return new Date(ts).toLocaleDateString("id-ID", { year: "numeric", month: "short", day: "numeric" });
+  return new Date(ts).toLocaleString("id-ID", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
 async function compressImageIfNeeded(file: File): Promise<File> {
