@@ -134,24 +134,24 @@ export default function AdminReviewPage() {
       ) : (
         <>
           {/* Mobile: flat card list */}
-          <div className="grid gap-2 md:hidden">
+          <div className="grid gap-1.5 md:hidden">
             {filteredDocs.map((doc) => (
-              <div key={doc.id} className="border rounded-lg p-3 bg-card">
-                <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="block mb-2">
+              <div key={doc.id} className="border rounded-lg p-2.5 bg-card flex items-start gap-2">
+                <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1">
                   <p className="text-xs font-medium text-primary">{doc.irrigation_areas?.name}</p>
-                  <p className="text-sm font-medium truncate mt-0.5">{doc.file_name}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {doc.kategori_dokumen?.name}{doc.year ? ` · ${doc.year}` : ""} · {formatFileSize(doc.file_size)}
+                  <p className="text-sm font-medium truncate">{doc.file_name}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {doc.kategori_dokumen?.name}{doc.year ? ` \u00b7 ${doc.year}` : ""} \u00b7 {formatFileSize(doc.file_size)}
                   </p>
                 </a>
-                <div className="flex items-stretch gap-2">
-                  <Button size="icon" className="w-9 h-9 bg-green-600 hover:bg-green-700 text-white shrink-0" disabled={moving === doc.id} onClick={() => handleReview(doc, "approved")}>
-                    {moving === doc.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                <div className="flex items-start gap-1 shrink-0 pt-1">
+                  <Button size="icon" className="w-7 h-7 bg-green-600 hover:bg-green-700 text-white" disabled={moving === doc.id} onClick={() => handleReview(doc, "approved")}>
+                    {moving === doc.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle className="h-3.5 w-3.5" />}
                   </Button>
                   <AlertDialog open={rejectDialog.open && rejectDialog.doc?.id === doc.id} onOpenChange={(open) => setRejectDialog(open ? { open: true, doc } : { open: false, doc: null })}>
                     <AlertDialogTrigger asChild>
-                      <Button size="icon" variant="outline" className="w-9 h-9 text-red-600 border-red-300 shrink-0" disabled={moving === doc.id}>
-                        <XCircle className="h-4 w-4" />
+                      <Button size="icon" variant="outline" className="w-7 h-7 text-red-600 border-red-300" disabled={moving === doc.id}>
+                        <XCircle className="h-3.5 w-3.5" />
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
