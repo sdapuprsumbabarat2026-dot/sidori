@@ -5,7 +5,7 @@ import { Card, CardContent } from "../components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "../components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { StatusBadge } from "../components/StatusBadge";
-import { Loader2, History, FileText } from "lucide-react";
+import { Loader2, History, FileText, MapPin, Ruler, Wallet } from "lucide-react";
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -85,68 +85,119 @@ export default function RiwayatPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card>
-          <CardContent className="p-0 overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-10">No</TableHead>
-                  <TableHead>Nama DI</TableHead>
-                  <TableHead>Jenis DI</TableHead>
-                  <TableHead>Menu</TableHead>
-                  <TableHead>Kecamatan</TableHead>
-                  <TableHead>Desa</TableHead>
-                  <TableHead className="text-right">Outcome (Ha)</TableHead>
-                  <TableHead className="text-right">Output (Km)</TableHead>
-                  <TableHead className="text-right">Pagu (Rp)</TableHead>
-                  <TableHead>Jenis Usulan</TableHead>
-                  <TableHead>Status Usulan</TableHead>
-                  <TableHead className="text-right">Dokumen</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {areas.map((a, idx) => (
-                  <TableRow key={a.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/area/${a.id}`)}>
-                    <TableCell>{idx + 1}</TableCell>
-                    <TableCell className="font-medium">{a.name}</TableCell>
-                    <TableCell>{a.irrigation_types?.name || "-"}</TableCell>
-                    <TableCell>{menuLabel(a.menu_kegiatan)}</TableCell>
-                    <TableCell>{a.kecamatan || "-"}</TableCell>
-                    <TableCell>{a.desa || "-"}</TableCell>
-                    <TableCell className="text-right">{a.outcome_ha ? Number(a.outcome_ha).toLocaleString("id-ID") : "-"}</TableCell>
-                    <TableCell className="text-right">{a.output_km ? Number(a.output_km).toLocaleString("id-ID") : "-"}</TableCell>
-                    <TableCell className="text-right">{a.pagu_rp ? formatRp(Number(a.pagu_rp)) : "-"}</TableCell>
-                    <TableCell>
-                      {a.status_verifikasi === "usulan_baru"
-                        ? "Usulan Baru"
-                        : a.status_verifikasi === "stock_program"
-                          ? "Stock Program"
-                          : "-"}
-                    </TableCell>
-                    <TableCell>
+        <>
+          {/* Mobile: card list */}
+          <div className="grid gap-3 md:hidden">
+            {areas.map((a) => (
+              <Card key={a.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/area/${a.id}`)}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <StatusBadge status={a.status} />
-                        {a.status === "stock_program" && (
-                          <span className="text-xs text-muted-foreground italic">Dijadikan Stock Program</span>
-                        )}
+                        <MapPin className="h-4 w-4 shrink-0 text-primary" />
+                        <p className="font-medium truncate">{a.name}</p>
                       </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <FileText className="h-4 w-4 text-muted-foreground inline" />
-                    </TableCell>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {a.irrigation_types?.name}{a.menu_kegiatan ? ` · ${menuLabel(a.menu_kegiatan)}` : ""}
+                        {a.kecamatan ? ` · ${a.kecamatan}${a.desa ? `, ${a.desa}` : ""}` : ""}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <StatusBadge status={a.status} />
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><Ruler className="h-3 w-3" /> {a.outcome_ha ? `${Number(a.outcome_ha).toLocaleString("id-ID")} Ha` : "-"}</span>
+                    <span className="flex items-center gap-1"><Ruler className="h-3 w-3" /> {a.output_km ? `${Number(a.output_km).toLocaleString("id-ID")} Km` : "-"}</span>
+                    <span className="flex items-center gap-1"><Wallet className="h-3 w-3" /> {a.pagu_rp ? formatRp(Number(a.pagu_rp)) : "-"}</span>
+                  </div>
+                  {a.status_verifikasi && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {a.status_verifikasi === "usulan_baru" ? "Usulan Baru" : "Stock Program"}
+                      {a.status === "stock_program" && <span className="italic ml-1">(Dijadikan Stock Program)</span>}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+            {/* Mobile total */}
+            <Card className="bg-muted/30">
+              <CardContent className="p-4">
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
+                  <span>Total: {areas.length} daerah</span>
+                  <span>{totalOutcome.toLocaleString("id-ID")} Ha</span>
+                  <span>{totalOutputKm.toLocaleString("id-ID")} Km</span>
+                  <span>{formatRp(totalPagu)}</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Desktop: table */}
+          <Card className="hidden md:block">
+            <CardContent className="p-0 overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10">No</TableHead>
+                    <TableHead>Nama DI</TableHead>
+                    <TableHead>Jenis DI</TableHead>
+                    <TableHead>Menu</TableHead>
+                    <TableHead>Kecamatan</TableHead>
+                    <TableHead>Desa</TableHead>
+                    <TableHead className="text-right">Outcome (Ha)</TableHead>
+                    <TableHead className="text-right">Output (Km)</TableHead>
+                    <TableHead className="text-right">Pagu (Rp)</TableHead>
+                    <TableHead>Jenis Usulan</TableHead>
+                    <TableHead>Status Usulan</TableHead>
+                    <TableHead className="text-right">Dokumen</TableHead>
                   </TableRow>
-                ))}
-                <TableRow className="font-semibold bg-muted/30">
-                  <TableCell colSpan={6} className="text-right">Total</TableCell>
-                  <TableCell className="text-right">{totalOutcome.toLocaleString("id-ID")}</TableCell>
-                  <TableCell className="text-right">{totalOutputKm.toLocaleString("id-ID")}</TableCell>
-                  <TableCell className="text-right">{formatRp(totalPagu)}</TableCell>
-                  <TableCell colSpan={3} />
-                </TableRow>
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                </TableHeader>
+                <TableBody>
+                  {areas.map((a, idx) => (
+                    <TableRow key={a.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/area/${a.id}`)}>
+                      <TableCell>{idx + 1}</TableCell>
+                      <TableCell className="font-medium">{a.name}</TableCell>
+                      <TableCell>{a.irrigation_types?.name || "-"}</TableCell>
+                      <TableCell>{menuLabel(a.menu_kegiatan)}</TableCell>
+                      <TableCell>{a.kecamatan || "-"}</TableCell>
+                      <TableCell>{a.desa || "-"}</TableCell>
+                      <TableCell className="text-right">{a.outcome_ha ? Number(a.outcome_ha).toLocaleString("id-ID") : "-"}</TableCell>
+                      <TableCell className="text-right">{a.output_km ? Number(a.output_km).toLocaleString("id-ID") : "-"}</TableCell>
+                      <TableCell className="text-right">{a.pagu_rp ? formatRp(Number(a.pagu_rp)) : "-"}</TableCell>
+                      <TableCell>
+                        {a.status_verifikasi === "usulan_baru"
+                          ? "Usulan Baru"
+                          : a.status_verifikasi === "stock_program"
+                            ? "Stock Program"
+                            : "-"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <StatusBadge status={a.status} />
+                          {a.status === "stock_program" && (
+                            <span className="text-xs text-muted-foreground italic">Dijadikan Stock Program</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <FileText className="h-4 w-4 text-muted-foreground inline" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  <TableRow className="font-semibold bg-muted/30">
+                    <TableCell colSpan={6} className="text-right">Total</TableCell>
+                    <TableCell className="text-right">{totalOutcome.toLocaleString("id-ID")}</TableCell>
+                    <TableCell className="text-right">{totalOutputKm.toLocaleString("id-ID")}</TableCell>
+                    <TableCell className="text-right">{formatRp(totalPagu)}</TableCell>
+                    <TableCell colSpan={3} />
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </>
       )}
     </div>
   );

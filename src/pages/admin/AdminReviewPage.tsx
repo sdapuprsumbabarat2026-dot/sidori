@@ -106,7 +106,7 @@ export default function AdminReviewPage() {
 
       <div className="flex flex-wrap items-center gap-3">
         <Select value={filterArea} onValueChange={setFilterArea}>
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="Semua Area" />
           </SelectTrigger>
           <SelectContent>
@@ -145,7 +145,7 @@ export default function AdminReviewPage() {
                   <FolderOpen className="h-5 w-5 text-muted-foreground" />
                   {irrType}
                 </h2>
-                <div className="space-y-4 pl-4">
+                <div className="space-y-4 sm:pl-4">
                   {Object.entries(areas).map(([irrArea, areaDocs]) => (
                     <div key={irrArea}>
                       <h3 className="text-sm font-medium text-muted-foreground mb-2">
@@ -154,8 +154,8 @@ export default function AdminReviewPage() {
                       <div className="grid gap-3">
                         {areaDocs.map((doc) => (
                           <Card key={doc.id}>
-                            <CardContent className="py-4">
-                              <div className="flex items-start justify-between gap-4">
+                            <CardContent className="py-3 sm:py-4">
+                              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center gap-2 mb-1">
                                     <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -170,19 +170,21 @@ export default function AdminReviewPage() {
                                     <p className="text-xs text-muted-foreground mt-1">Diupload oleh {doc.uploader.name}</p>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-1 shrink-0">
+                                <div className="flex items-center gap-1 sm:shrink-0">
                                   <Button variant="outline" size="sm" asChild>
                                     <a href={doc.file_url} target="_blank" rel="noopener noreferrer">
                                       <Eye className="h-4 w-4" />
                                     </a>
                                   </Button>
                                   <Button variant="outline" size="sm" className="text-green-600" disabled={moving === doc.id} onClick={() => handleReview(doc, "approved")}>
-                                    {moving === doc.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-1" />} Sesuai
+                                    {moving === doc.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                                    <span className="hidden sm:inline sm:ml-1">Sesuai</span>
                                   </Button>
                                   <AlertDialog open={rejectDialog.open && rejectDialog.doc?.id === doc.id} onOpenChange={(open) => setRejectDialog(open ? { open: true, doc } : { open: false, doc: null })}>
                                     <AlertDialogTrigger asChild>
                                       <Button variant="outline" size="sm" className="text-red-600" disabled={moving === doc.id}>
-                                        <XCircle className="h-4 w-4 mr-1" /> Tidak Sesuai
+                                        <XCircle className="h-4 w-4" />
+                                        <span className="hidden sm:inline sm:ml-1">Tidak Sesuai</span>
                                       </Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
