@@ -104,7 +104,7 @@ export default function AdminReviewPage() {
         <p className="text-muted-foreground">Periksa dan setujui/tolak dokumen yang diupload.</p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
         <Select value={filterArea} onValueChange={setFilterArea}>
           <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="Semua Area" />
@@ -116,9 +116,9 @@ export default function AdminReviewPage() {
             ))}
           </SelectContent>
         </Select>
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative w-full sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Cari dokumen..." className="pl-10" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+          <Input placeholder="Cari dokumen..." className="pl-10 w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
         </div>
       </div>
 
@@ -170,21 +170,22 @@ export default function AdminReviewPage() {
                                     <p className="text-xs text-muted-foreground mt-1">Diupload oleh {doc.uploader.name}</p>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-1 sm:shrink-0">
-                                  <Button variant="outline" size="sm" asChild>
+                                <div className="flex items-stretch gap-2 sm:items-center sm:gap-1 sm:shrink-0">
+                                  <Button variant="outline" size="sm" className="flex-1 sm:flex-none px-2" asChild>
                                     <a href={doc.file_url} target="_blank" rel="noopener noreferrer">
-                                      <Eye className="h-4 w-4" />
+                                      <Eye className="h-4 w-4 sm:mr-0" />
+                                      <span className="sm:hidden ml-1">Lihat</span>
                                     </a>
                                   </Button>
-                                  <Button variant="outline" size="sm" className="text-green-600" disabled={moving === doc.id} onClick={() => handleReview(doc, "approved")}>
+                                  <Button variant="outline" size="sm" className="flex-1 sm:flex-none text-green-600" disabled={moving === doc.id} onClick={() => handleReview(doc, "approved")}>
                                     {moving === doc.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
-                                    <span className="hidden sm:inline sm:ml-1">Sesuai</span>
+                                    <span className="sm:ml-1 ml-1">Sesuai</span>
                                   </Button>
                                   <AlertDialog open={rejectDialog.open && rejectDialog.doc?.id === doc.id} onOpenChange={(open) => setRejectDialog(open ? { open: true, doc } : { open: false, doc: null })}>
                                     <AlertDialogTrigger asChild>
-                                      <Button variant="outline" size="sm" className="text-red-600" disabled={moving === doc.id}>
+                                      <Button variant="outline" size="sm" className="flex-1 sm:flex-none text-red-600" disabled={moving === doc.id}>
                                         <XCircle className="h-4 w-4" />
-                                        <span className="hidden sm:inline sm:ml-1">Tidak Sesuai</span>
+                                        <span className="sm:ml-1 ml-1">Tolak</span>
                                       </Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
