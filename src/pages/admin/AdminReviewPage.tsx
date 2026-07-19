@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { Card, CardContent } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
 import { Textarea } from "../../components/ui/textarea";
 import {
   AlertDialog,
@@ -84,6 +85,7 @@ export default function AdminReviewPage() {
     return true;
   });
 
+  // Group by irrigation type > irrigation area
   const grouped = filteredDocs.reduce((acc, doc) => {
     const irrType = doc.irrigation_areas?.irrigation_types?.name || "Lainnya";
     const irrArea = doc.irrigation_areas?.name || "Lainnya";
@@ -139,7 +141,7 @@ export default function AdminReviewPage() {
                   <p className="text-xs font-medium text-primary">{doc.irrigation_areas?.name}</p>
                   <p className="text-sm font-medium truncate mt-0.5">{doc.file_name}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {doc.kategori_dokumen?.name}{doc.year ? ` · ${doc.year}` : ""} · {formatFileSize(doc.file_size)}
+                    {doc.kategori_dokumen?.name}{doc.year ? ` \u00b7 ${doc.year}` : ""} \u00b7 {formatFileSize(doc.file_size)}
                   </p>
                 </a>
                 <div className="flex items-stretch gap-2">
