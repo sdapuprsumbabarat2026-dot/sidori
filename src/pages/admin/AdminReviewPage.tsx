@@ -138,10 +138,15 @@ export default function AdminReviewPage() {
             {filteredDocs.map((doc) => (
               <div key={doc.id} className="border rounded-lg px-3 py-2 bg-card">
                 <div className="flex items-start justify-between gap-2">
-                  <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1">
                     <p className="text-xs font-medium text-primary">{doc.irrigation_areas?.name}</p>
-                    <p className="text-sm truncate mt-0.5">{doc.file_name}</p>
-                  </a>
+                    <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="block">
+                      <p className="text-sm truncate mt-0.5">{doc.file_name}</p>
+                    </a>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      {doc.kategori_dokumen?.name}{doc.year && <span> · {doc.year}</span>}<span> · {formatFileSize(doc.file_size)}</span>
+                    </p>
+                  </div>
                   <div className="flex items-center gap-1 shrink-0 pt-0.5">
                     <Button size="icon" className="w-9 h-9 bg-green-600 hover:bg-green-700 text-white" disabled={moving === doc.id} onClick={() => handleReview(doc, "approved")}>
                       {moving === doc.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
