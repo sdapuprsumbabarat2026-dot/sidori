@@ -98,7 +98,7 @@ export default function AdminReviewPage() {
   const irrigationTypeOrder = ["Irigasi Air Permukaan", "Irigasi Air Tanah"];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 overflow-x-hidden w-full max-w-full">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Review Dokumen</h1>
         <p className="text-muted-foreground">Periksa dan setujui/tolak dokumen yang diupload.</p>

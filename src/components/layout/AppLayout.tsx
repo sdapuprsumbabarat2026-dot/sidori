@@ -9,7 +9,7 @@ export default function AppLayout() {
       <Navbar />
       <div className="flex flex-1">
         <Sidebar />
-        <main className="flex-1 p-4 md:p-6 pb-20 md:pb-6">
+        <main className="flex-1 min-w-0 p-4 md:p-6 pb-20 md:pb-6">
           <Outlet />
         </main>
       </div>
