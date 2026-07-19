@@ -136,25 +136,24 @@ export default function AdminReviewPage() {
           {/* Mobile: 2-line card */}
           <div className="grid grid-cols-1 gap-1.5 md:hidden">
             {filteredDocs.map((doc) => (
-              <div key={doc.id} className="border rounded-lg px-3 py-2 bg-card">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-primary">{doc.irrigation_areas?.name}</p>
-                    <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="block">
-                      <p className="text-sm truncate mt-0.5">{doc.file_name}</p>
-                    </a>
-                    <p className="text-[11px] text-muted-foreground mt-1">
-                      {doc.kategori_dokumen?.name}{doc.year && <span> · {doc.year}</span>}<span> · {formatFileSize(doc.file_size)}</span>
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0 pt-0.5">
-                    <Button size="icon" className="w-9 h-9 bg-green-600 hover:bg-green-700 text-white" disabled={moving === doc.id} onClick={() => handleReview(doc, "approved")}>
-                      {moving === doc.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
-                    </Button>
+              <div key={doc.id} className="border rounded-lg px-3 py-2.5 bg-card space-y-2">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-primary">{doc.irrigation_areas?.name}</p>
+                  <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="block">
+                    <p className="text-sm truncate mt-0.5">{doc.file_name}</p>
+                  </a>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    {doc.kategori_dokumen?.name}{doc.year && <span> · {doc.year}</span>}<span> · {formatFileSize(doc.file_size)}</span>
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" className="flex-1 h-8 bg-green-600 hover:bg-green-700 text-white text-xs" disabled={moving === doc.id} onClick={() => handleReview(doc, "approved")}>
+                    {moving === doc.id ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <CheckCircle className="h-3 w-3 mr-1" />} Setuju
+                  </Button>
                     <AlertDialog open={rejectDialog.open && rejectDialog.doc?.id === doc.id} onOpenChange={(open) => { setRejectDialog(open ? { open: true, doc: doc } : { open: false, doc: null }) }}>
                       <AlertDialogTrigger asChild>
-                        <Button size="icon" variant="outline" className="w-9 h-9 text-red-600 border-red-300" disabled={moving === doc.id}>
-                          <XCircle className="h-4 w-4" />
+                        <Button variant="outline" size="sm" className="flex-1 h-8 text-red-600 border-red-300 text-xs" disabled={moving === doc.id}>
+                          <XCircle className="h-3 w-3 mr-1" /> Tolak
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
@@ -170,7 +169,6 @@ export default function AdminReviewPage() {
                       </AlertDialogContent>
                     </AlertDialog>
                   </div>
-                </div>
               </div>
             ))}
           </div>
