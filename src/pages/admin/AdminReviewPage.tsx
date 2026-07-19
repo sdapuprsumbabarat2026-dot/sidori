@@ -116,13 +116,13 @@ export default function AdminReviewPage() {
         </Card>
       ) : (
         <div className="space-y-8">
-          {Object.entries(grouped)
+          {(Object.entries(grouped) as [string, Record<string, any[]>][])
             .sort(([a], [b]) => {
               const ia = irrigationTypeOrder.indexOf(a);
               const ib = irrigationTypeOrder.indexOf(b);
               return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
             })
-            .map(([irrType, areas]: [string, Record<string, any[]>]) => (
+            .map(([irrType, areas]) => (
               <div key={irrType}>
                 <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
                   <FolderOpen className="h-5 w-5 text-muted-foreground" />

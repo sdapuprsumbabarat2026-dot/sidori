@@ -89,8 +89,6 @@ export default function DashboardPage() {
     load();
   }, [year]);
 
-  const totalAreas = typeBreakdown.reduce((acc, t) => acc + t.area_count, 0);
-
   const formatRp = (v: number) =>
     new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(v);
 
