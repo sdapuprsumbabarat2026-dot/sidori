@@ -18,7 +18,10 @@ import {
 import { Search, CheckCircle, XCircle, Eye, FileText, Loader2, FolderOpen } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 
-const GAS_URL = import.meta.env.VITE_GAS_URL;
+const GAS_PROXY = "/api/gas-proxy?target=" + encodeURIComponent(import.meta.env.VITE_GAS_URL);
+const GAS_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+  ? import.meta.env.VITE_GAS_URL
+  : GAS_PROXY;
 const GAS_API_KEY = import.meta.env.VITE_GAS_API_KEY;
 
 function formatFileSize(bytes: number | null) {

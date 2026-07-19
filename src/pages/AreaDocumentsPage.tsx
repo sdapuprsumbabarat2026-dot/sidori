@@ -33,7 +33,10 @@ import {
 import type { IrrigationArea, KategoriDokumen } from "../types";
 import { useAuthStore } from "../store/authStore";
 
-const GAS_URL = import.meta.env.VITE_GAS_URL;
+const GAS_PROXY = "/api/gas-proxy?target=" + encodeURIComponent(import.meta.env.VITE_GAS_URL);
+const GAS_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+  ? import.meta.env.VITE_GAS_URL
+  : GAS_PROXY;
 const GAS_API_KEY = import.meta.env.VITE_GAS_API_KEY;
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: 16 }, (_, i) => CURRENT_YEAR - 5 + i);
@@ -53,10 +56,6 @@ function formatDate(ts: string) {
   return new Date(ts).toLocaleDateString("id-ID", { year: "numeric", month: "short", day: "numeric" });
 }
 
-// Kompresi gambar di sisi browser sebelum upload.
-// - JPG/WebP: resize maks 1920px + kualitas JPEG 75% (ukuran turun drastis)
-// - PNG: dipertahankan sebagai PNG (tidak dikonversi ke JPG) supaya transparansi tidak hilang,
-//   hanya di-resize dimensinya kalau melebihi 1920px.
 async function compressImageIfNeeded(file: File): Promise<File> {
   if (!file.type.startsWith("image/") || file.type === "image/svg+xml") return file;
 
