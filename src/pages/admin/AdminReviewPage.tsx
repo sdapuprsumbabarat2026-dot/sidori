@@ -132,7 +132,7 @@ export default function AdminReviewPage() {
                   {Object.entries(areas).map(([irrArea, areaDocs]) => (
                     <div key={irrArea}>
                       <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                        DI. {irrArea}
+                        {irrArea}
                       </h3>
                       <div className="grid gap-3">
                         {areaDocs.map((doc) => (

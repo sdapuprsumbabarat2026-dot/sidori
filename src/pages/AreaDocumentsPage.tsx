@@ -128,8 +128,6 @@ export default function AreaDocumentsPage() {
   const uploadCategoryRef = useRef(uploadCategory);
   uploadCategoryRef.current = uploadCategory;
   const [uploadYear, setUploadYear] = useState(CURRENT_YEAR.toString());
-  const [selectedYear, setSelectedYear] = useState("");
-  const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -171,21 +169,16 @@ export default function AreaDocumentsPage() {
       .from("documents")
       .select("*, kategori_dokumen(name), uploader:users!documents_uploaded_by_fkey(name)")
       .eq("irrigation_area_id", id);
-    if (selectedYear) docQuery = docQuery.eq("year", Number(selectedYear));
     docQuery = docQuery.order("created_at", { ascending: false });
 
-    const [catRes, docRes, yearsRes] = await Promise.all([
+    const [catRes, docRes] = await Promise.all([
       catQuery,
       docQuery,
-      supabase.from("documents").select("year").eq("irrigation_area_id", id).not("year", "is", null),
     ]);
     setCategories(catRes.data || []);
     setDocuments(docRes.data || []);
-    const years = Array.from(new Set((yearsRes.data || []).map((d) => d.year))) as number[];
-    years.sort((a, b) => b - a);
-    setAvailableYears(years);
     setLoading(false);
-  }, [id, selectedYear]);
+  }, [id]);
 
   useEffect(() => { loadData() }, [loadData]);
 
@@ -373,17 +366,6 @@ export default function AreaDocumentsPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <Select value={selectedYear} onValueChange={setSelectedYear}>
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="Semua Tahun" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">Semua Tahun</SelectItem>
-            {availableYears.map((y) => (
-              <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -553,12 +535,19 @@ export default function AreaDocumentsPage() {
                 <div className="min-w-0 flex-1">
                   <p className={`text-sm font-medium ${existing ? "" : "text-muted-foreground"}`}>{cat.name}</p>
                   {existing ? (
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-                      <span className="truncate max-w-[300px]">{existing.file_name}</span>
-                      {existing.year && <span>{existing.year}</span>}
-                      <span>{formatDate(existing.created_at)}</span>
-                      <span>{formatSize(existing.file_size)}</span>
-                      {existing.uploader?.name && <span>oleh {existing.uploader.name}</span>}
+                    <div className="text-xs text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                        <span className="truncate max-w-[300px]">{existing.file_name}</span>
+                        {existing.year && <span>{existing.year}</span>}
+                        <span>{formatDate(existing.created_at)}</span>
+                        <span>{formatSize(existing.file_size)}</span>
+                        {existing.uploader?.name && <span>oleh {existing.uploader.name}</span>}
+                      </div>
+                      {existing.status === "rejected" && existing.notes && (
+                        <p className="mt-1 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-2 py-1 rounded border border-red-200 dark:border-red-900">
+                          Catatan: {existing.notes}
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <p className="text-xs text-muted-foreground">Belum diupload</p>

@@ -185,6 +185,7 @@ export default function AdminAreasPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [filterYear, setFilterYear] = useState("");
   const navigate = useNavigate();
 
   const loadData = async () => {
@@ -307,13 +308,28 @@ export default function AdminAreasPage() {
         </Dialog>
       </div>
 
+      <div className="flex justify-end">
+        <Select value={filterYear} onValueChange={setFilterYear}>
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder="Semua Tahun" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Semua Tahun</SelectItem>
+            {[...new Set(areas.map((a) => a.tahun_anggaran).filter(Boolean))].sort((a: number, b: number) => b - a).map((y) => (
+              <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       {loading ? (
         <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
       ) : areas.length === 0 ? (
         <Card><CardContent className="p-0"><div className="divide-y"><div className="text-center py-8 text-muted-foreground">Belum ada daerah irigasi</div></div></CardContent></Card>
       ) : (
         (() => {
-          const groupedByYear = areas.reduce((acc: Record<string, any[]>, area) => {
+          const filtered = filterYear ? areas.filter((a) => a.tahun_anggaran === Number(filterYear)) : areas;
+          const groupedByYear = filtered.reduce((acc: Record<string, any[]>, area) => {
             const year = area.tahun_anggaran || "Tanpa Tahun";
             if (!acc[year]) acc[year] = [];
             acc[year].push(area);

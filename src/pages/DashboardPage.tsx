@@ -140,25 +140,15 @@ export default function DashboardPage() {
             <h2 className="text-lg font-semibold mb-3">Daerah Irigasi</h2>
             <div className="grid gap-4 sm:grid-cols-2">
               {typeBreakdown.map((t) => (
-                <Card key={t.id} className="bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900">
+                <Card key={t.id} className="bg-emerald-100 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-800">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-semibold text-lg text-emerald-800 dark:text-emerald-300">{t.name}</h3>
                       <MapPin className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                     </div>
-                    <div className="space-y-3">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-emerald-700 dark:text-emerald-400">Jumlah</span>
-                        <span className="font-medium text-emerald-800 dark:text-emerald-300">{t.area_count}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-emerald-700 dark:text-emerald-400">Disetujui</span>
-                        <span className="font-medium text-green-600">{t.approved_count}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-emerald-700 dark:text-emerald-400">Stock Program</span>
-                        <span className="font-medium text-amber-600">{t.stock_count}</span>
-                      </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-emerald-700 dark:text-emerald-400">Jumlah</span>
+                      <span className="font-medium text-emerald-800 dark:text-emerald-300 text-lg">{t.area_count}</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -169,9 +159,9 @@ export default function DashboardPage() {
           <div>
             <h2 className="text-lg font-semibold mb-3">Status Dokumen</h2>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Card className="bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900">
+              <Card className="bg-amber-100 dark:bg-amber-950/60 border-amber-300 dark:border-amber-800">
                 <CardContent className="p-4 flex items-center gap-3">
-                  <div className="rounded-lg bg-amber-100 dark:bg-amber-900/30 p-2.5">
+                  <div className="rounded-lg bg-amber-200 dark:bg-amber-900/50 p-2.5">
                     <FileText className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                   </div>
                   <div>
@@ -180,9 +170,9 @@ export default function DashboardPage() {
                   </div>
                 </CardContent>
               </Card>
-              <Card className="bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-900">
+              <Card className="bg-green-100 dark:bg-green-950/60 border-green-300 dark:border-green-800">
                 <CardContent className="p-4 flex items-center gap-3">
-                  <div className="rounded-lg bg-green-100 dark:bg-green-900/30 p-2.5">
+                  <div className="rounded-lg bg-green-200 dark:bg-green-900/50 p-2.5">
                     <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
@@ -198,7 +188,7 @@ export default function DashboardPage() {
             <h2 className="text-lg font-semibold mb-3">Status Usulan</h2>
             <div className="grid gap-4 sm:grid-cols-2">
               {typeBreakdown.map((t) => (
-                <Card key={t.id} className="bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800">
+                <Card key={t.id} className="bg-slate-100 dark:bg-slate-900/60 border-slate-300 dark:border-slate-800">
                   <CardContent className="p-4">
                     <p className="font-medium mb-3 text-slate-700 dark:text-slate-300">{t.name}</p>
                     <div className="flex gap-4">
@@ -220,9 +210,9 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Card className="bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900">
+            <Card className="bg-blue-100 dark:bg-blue-950/60 border-blue-300 dark:border-blue-800">
               <CardContent className="p-4 flex items-center gap-3">
-                <div className="rounded-lg bg-blue-100 dark:bg-blue-900/30 p-2.5">
+                <div className="rounded-lg bg-blue-200 dark:bg-blue-900/50 p-2.5">
                   <Wallet className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
@@ -232,9 +222,9 @@ export default function DashboardPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900">
+            <Card className="bg-emerald-100 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-800">
               <CardContent className="p-4 flex items-center gap-3">
-                <div className="rounded-lg bg-emerald-100 dark:bg-emerald-900/30 p-2.5">
+                <div className="rounded-lg bg-emerald-200 dark:bg-emerald-900/50 p-2.5">
                   <Ruler className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
@@ -244,9 +234,9 @@ export default function DashboardPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-900">
+            <Card className="bg-purple-100 dark:bg-purple-950/60 border-purple-300 dark:border-purple-800">
               <CardContent className="p-4 flex items-center gap-3">
-                <div className="rounded-lg bg-purple-100 dark:bg-purple-900/30 p-2.5">
+                <div className="rounded-lg bg-purple-200 dark:bg-purple-900/50 p-2.5">
                   <Ruler className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
