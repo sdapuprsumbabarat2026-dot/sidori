@@ -244,6 +244,7 @@ export default function AreaDocumentsPage() {
       .select("*")
       .eq("irrigation_area_id", id)
       .eq("category_name", cat.name)
+      .eq("action", "replace")
       .order("created_at", { ascending: false });
     setHistoryEntries(data || []);
     setHistoryLoading(false);
