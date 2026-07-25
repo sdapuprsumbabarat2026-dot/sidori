@@ -28,7 +28,7 @@ import {
 import { StatusBadge } from "../components/StatusBadge";
 import {
   Loader2, Upload, Eye, FileText, Search, Trash2,
-  Check, Circle
+  Check, Circle, History
 } from "lucide-react";
 import type { IrrigationArea, KategoriDokumen } from "../types";
 import { useAuthStore } from "../store/authStore";
@@ -133,6 +133,10 @@ export default function AreaDocumentsPage() {
   const [dragOver, setDragOver] = useState(false);
   const [dragFile, setDragFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [historyEntries, setHistoryEntries] = useState<any[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyCategoryId, setHistoryCategoryId] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const existingDocForCategory = useCallback((catId: string) => {
     return documents.find((d) => d.category_id === catId);
@@ -228,6 +232,22 @@ export default function AreaDocumentsPage() {
     }
     removeDragFile();
   }, [uploadedFileId]);
+
+  const loadHistory = useCallback(async (catId: string) => {
+    const cat = categories.find((c) => c.id === catId);
+    if (!cat || !id) return;
+    setHistoryCategoryId(catId);
+    setHistoryLoading(true);
+    setHistoryOpen(true);
+    const { data } = await supabase
+      .from("document_activity_log")
+      .select("*")
+      .eq("irrigation_area_id", id)
+      .eq("category_name", cat.name)
+      .order("created_at", { ascending: false });
+    setHistoryEntries(data || []);
+    setHistoryLoading(false);
+  }, [id, categories]);
 
   const uploadToGAS = useCallback(async (file: File) => {
     if (!area) return;
@@ -544,6 +564,9 @@ export default function AreaDocumentsPage() {
                                   <Eye className="h-4 w-4" />
                                 </a>
                               </Button>
+                              <Button variant="ghost" size="icon" className="w-8 h-8" title="Riwayat" onClick={() => loadHistory(cat.id)}>
+                                <History className="h-4 w-4" />
+                              </Button>
                               <StatusBadge status={existing.status} />
                               {(user?.role === "super_admin" || (user?.role === "user" && existing.status !== "approved")) && (
                                 <AlertDialog>
@@ -623,6 +646,9 @@ export default function AreaDocumentsPage() {
                             <Upload className="h-4 w-4" />
                           </Button>
                         )}
+                        <Button variant="ghost" size="icon" title="Riwayat" onClick={() => loadHistory(cat.id)}>
+                          <History className="h-4 w-4" />
+                        </Button>
                         <StatusBadge status={existing.status} />
                         {(user?.role === "super_admin" || (user?.role === "user" && existing.status !== "approved")) && (
                           <AlertDialog>
@@ -655,6 +681,50 @@ export default function AreaDocumentsPage() {
           );
         })}
       </div>
+
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Riwayat {historyCategoryId && categories.find((c) => c.id === historyCategoryId)?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {historyLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : historyEntries.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">Belum ada riwayat</p>
+            ) : (
+              historyEntries.map((entry) => (
+                <div key={entry.id} className="border rounded-lg p-3 text-sm space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                      entry.action === "upload" ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400" :
+                      entry.action === "replace" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400" :
+                      entry.action === "approved" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400" :
+                      entry.action === "rejected" ? "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400" :
+                      "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                    }`}>
+                      {entry.action === "upload" ? "Upload" :
+                       entry.action === "replace" ? "Ganti" :
+                       entry.action === "approved" ? "Disetujui" :
+                       entry.action === "rejected" ? "Ditolak" :
+                       entry.action === "delete" ? "Dihapus" : entry.action}
+                    </span>
+                    <span className="text-muted-foreground">{formatDate(entry.created_at)}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{entry.file_name}</p>
+                  {entry.notes && (
+                    <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-2 py-1 rounded border border-red-200 dark:border-red-900">
+                      {entry.notes}
+                    </p>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
