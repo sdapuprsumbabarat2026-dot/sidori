@@ -255,17 +255,57 @@ export default function AreaDocumentsPage() {
       setUploadProgress(10);
       const toUpload = await compressImageIfNeeded(file);
       setCompressedFile(toUpload);
-      const q = new URLSearchParams({ target: import.meta.env.VITE_GAS_URL, _binary: "1", apiKey: GAS_API_KEY, fileName: toUpload.name, mimeType: toUpload.type, irigationType: area.irrigation_types?.name || "", areaName: area.name, year: uploadYear });
+
+      const fileBase64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onprogress = (e) => {
+          if (e.lengthComputable) setUploadProgress(10 + Math.round((e.loaded / e.total) * 15));
+        };
+        reader.onload = () => resolve((reader.result as string).split(",")[1]);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(toUpload);
+      });
+      setUploadProgress(25);
+
+      const iframe = document.createElement("iframe");
+      iframe.name = "up_" + Date.now();
+      iframe.style.display = "none";
+      document.body.appendChild(iframe);
+
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = import.meta.env.VITE_GAS_URL;
+      form.target = iframe.name;
+
+      const fields: Record<string, string> = {
+        _format: "iframe", apiKey: GAS_API_KEY, fileBase64,
+        fileName: toUpload.name, mimeType: toUpload.type,
+        irigationType: area.irrigation_types?.name || "", areaName: area.name, year: uploadYear,
+      };
+      for (const [k, v] of Object.entries(fields)) {
+        const el = document.createElement("input");
+        el.type = "hidden"; el.name = k; el.value = v;
+        form.appendChild(el);
+      }
+      document.body.appendChild(form);
+
       const sim = setInterval(() => setUploadProgress((p) => Math.min(p + 1, 95)), 500);
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 300000);
-      let result;
-      try {
-        const res = await fetch("/api/gas-proxy?" + q.toString(), { method: "POST", body: toUpload, signal: controller.signal });
-        clearTimeout(timer);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        result = await res.json();
-      } finally { clearInterval(sim) }
+      const result = await new Promise<any>((resolve, reject) => {
+        const timer = setTimeout(() => { cleanup(); reject(new Error("timeout")); }, 300000);
+        const handler = (e: MessageEvent) => {
+          const d = (typeof e.data === "string" ? JSON.parse(e.data) : e.data);
+          if (d && (d.fileUrl || d.error)) { clearTimeout(timer); cleanup(); resolve(d); }
+        };
+        const cleanup = () => {
+          window.removeEventListener("message", handler);
+          if (form.parentNode) form.parentNode.removeChild(form);
+          if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+        };
+        window.addEventListener("message", handler);
+        form.submit();
+      });
+      clearInterval(sim);
+
       if (!result.success) throw new Error(result.error || "unknown");
       setUploadedUrl(result.fileUrl);
       setUploadedFileId(result.fileId);
