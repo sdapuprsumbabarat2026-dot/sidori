@@ -80,7 +80,7 @@ function respond(iframe, data, status) {
 function sendHtmlResult(data) {
   const base = "https://sidori.vercel.app/upload-callback.html"
   const url = base + "?result=" + encodeURIComponent(JSON.stringify(data))
-  const html = '<script>window.location.href="' + url + '";<\/script>'
+  const html = '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=' + url + '"></head><body>Uploading...</body></html>'
   return ContentService.createTextOutput(html).setMimeType(ContentService.MimeType.HTML)
 }
 

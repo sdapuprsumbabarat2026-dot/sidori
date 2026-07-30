@@ -134,6 +134,7 @@ export default function AreaDocumentsPage() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyCategoryId, setHistoryCategoryId] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const uploadPopupRef = useRef<Window | null>(null);
 
   const existingDocForCategory = useCallback((catId: string) => {
     return documents.find((d) => d.category_id === catId);
@@ -190,6 +191,11 @@ export default function AreaDocumentsPage() {
 
   const handleDragLeave = () => setDragOver(false);
 
+  const openUploadPopup = () => {
+    if (uploadPopupRef.current && !uploadPopupRef.current.closed) uploadPopupRef.current.close();
+    uploadPopupRef.current = window.open("about:blank", "upload_popup", "width=500,height=400");
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
@@ -199,7 +205,7 @@ export default function AreaDocumentsPage() {
     if (f && uploadCategory && existingDocForCategory(uploadCategory)) {
       toast.error("Dokumen untuk kategori ini sudah ada. Hapus yang ada terlebih dahulu jika ingin mengganti."); return;
     }
-    if (f) { removeDragFile(); setTimeout(() => setDragFile(f), 0) }
+    if (f) { openUploadPopup(); removeDragFile(); setTimeout(() => setDragFile(f), 0) }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -209,7 +215,7 @@ export default function AreaDocumentsPage() {
     if (f && uploadCategory && existingDocForCategory(uploadCategory)) {
       toast.error("Dokumen untuk kategori ini sudah ada. Hapus yang ada terlebih dahulu jika ingin mengganti."); return;
     }
-    if (f) { removeDragFile(); setTimeout(() => { setDragFile(f); setDragOver(false) }, 0) }
+    if (f) { openUploadPopup(); removeDragFile(); setTimeout(() => { setDragFile(f); setDragOver(false) }, 0) }
   };
 
   const removeDragFile = () => {
@@ -267,15 +273,10 @@ export default function AreaDocumentsPage() {
       });
       setUploadProgress(25);
 
-      const iframe = document.createElement("iframe");
-      iframe.name = "up_" + Date.now();
-      iframe.style.display = "none";
-      document.body.appendChild(iframe);
-
       const form = document.createElement("form");
       form.method = "POST";
       form.action = import.meta.env.VITE_GAS_URL;
-      form.target = iframe.name;
+      form.target = "upload_popup";
 
       const fields: Record<string, string> = {
         _format: "iframe", apiKey: GAS_API_KEY, fileBase64,
@@ -289,6 +290,14 @@ export default function AreaDocumentsPage() {
       }
       document.body.appendChild(form);
 
+      if (!uploadPopupRef.current || uploadPopupRef.current.closed) {
+        uploadPopupRef.current = window.open("about:blank", "upload_popup", "width=500,height=400");
+      }
+      if (!uploadPopupRef.current) {
+        toast.error("Popup diblokir browser. Izinkan popup untuk upload.");
+        setUploadPhase("error"); return;
+      }
+
       const sim = setInterval(() => setUploadProgress((p) => Math.min(p + 1, 95)), 500);
       const result = await new Promise<any>((resolve, reject) => {
         const timer = setTimeout(() => { cleanup(); reject(new Error("timeout")); }, 300000);
@@ -299,7 +308,7 @@ export default function AreaDocumentsPage() {
         const cleanup = () => {
           window.removeEventListener("message", handler);
           if (form.parentNode) form.parentNode.removeChild(form);
-          if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+          if (uploadPopupRef.current && !uploadPopupRef.current.closed) uploadPopupRef.current.close();
         };
         window.addEventListener("message", handler);
         form.submit();

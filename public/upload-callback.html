@@ -2,6 +2,10 @@
 <html><head><meta charset="utf-8"><title>Mengirim hasil upload...</title></head><body>
 <script>
 var r = new URLSearchParams(location.search).get("result")
-if (r) { try { window.parent.postMessage(JSON.parse(r), "*") } catch(e) {} }
+if (r) {
+  var target = window.opener || window.parent
+  if (target) try { target.postMessage(JSON.parse(r), "*") } catch(e) {}
+}
+window.close()
 </script>
 </body></html>
