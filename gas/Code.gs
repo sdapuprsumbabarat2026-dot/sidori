@@ -78,7 +78,9 @@ function respond(iframe, data, status) {
 }
 
 function sendHtmlResult(data) {
-  const html = '<script>window.top.postMessage(' + JSON.stringify(data) + ', "*");<\/script>'
+  const base = "https://sidori.vercel.app/upload-callback.html"
+  const url = base + "?result=" + encodeURIComponent(JSON.stringify(data))
+  const html = '<script>window.location.href="' + url + '";<\/script>'
   return ContentService.createTextOutput(html).setMimeType(ContentService.MimeType.HTML)
 }
 
