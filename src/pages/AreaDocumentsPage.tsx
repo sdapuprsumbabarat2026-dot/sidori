@@ -33,10 +33,7 @@ import {
 import type { IrrigationArea, KategoriDokumen } from "../types";
 import { useAuthStore } from "../store/authStore";
 
-const GAS_PROXY = "/api/gas-proxy?target=" + encodeURIComponent(import.meta.env.VITE_GAS_URL);
-const GAS_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-  ? import.meta.env.VITE_GAS_URL
-  : GAS_PROXY;
+const GAS_URL = import.meta.env.VITE_GAS_URL;
 const GAS_API_KEY = import.meta.env.VITE_GAS_API_KEY;
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: 16 }, (_, i) => CURRENT_YEAR - 5 + i);
@@ -255,44 +252,20 @@ export default function AreaDocumentsPage() {
     setUploadPhase("uploading");
     setUploadProgress(0);
     try {
-      setUploadProgress(5);
+      setUploadProgress(10);
       const toUpload = await compressImageIfNeeded(file);
       setCompressedFile(toUpload);
-      setUploadProgress(10);
-
-      const fileBase64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onprogress = (e) => {
-          if (e.lengthComputable) setUploadProgress(10 + Math.round((e.loaded / e.total) * 20));
-        };
-        reader.onload = () => resolve((reader.result as string).split(",")[1]);
-        reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(toUpload);
-      });
-      setUploadProgress(30);
-
-      const body = new URLSearchParams({
-        apiKey: GAS_API_KEY, fileBase64, fileName: toUpload.name, mimeType: toUpload.type,
-        irigationType: area.irrigation_types?.name || "", areaName: area.name, year: uploadYear,
-      });
-
-      setUploadProgress(40);
+      const q = new URLSearchParams({ target: import.meta.env.VITE_GAS_URL, _binary: "1", apiKey: GAS_API_KEY, fileName: toUpload.name, mimeType: toUpload.type, irigationType: area.irrigation_types?.name || "", areaName: area.name, year: uploadYear });
       const sim = setInterval(() => setUploadProgress((p) => Math.min(p + 1, 95)), 500);
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 300000);
-      let result: any;
+      let result;
       try {
-        const res = await fetch(GAS_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: body.toString(),
-          signal: controller.signal,
-        });
+        const res = await fetch("/api/gas-proxy?" + q.toString(), { method: "POST", body: toUpload, signal: controller.signal });
         clearTimeout(timer);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         result = await res.json();
       } finally { clearInterval(sim) }
-
       if (!result.success) throw new Error(result.error || "unknown");
       setUploadedUrl(result.fileUrl);
       setUploadedFileId(result.fileId);

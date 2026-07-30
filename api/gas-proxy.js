@@ -4,13 +4,27 @@ export default async function handler(req, res) {
 
   const buffers = [];
   for await (const chunk of req) buffers.push(chunk);
-  const body = Buffer.concat(buffers).toString();
+  const raw = Buffer.concat(buffers);
 
   try {
+    const params = new URLSearchParams();
+    for (const [k, v] of searchParams) {
+      if (k !== "target") params.set(k, v);
+    }
+
+    if (raw.length > 0 && searchParams.get("_binary") === "1") {
+      params.set("fileBase64", raw.toString("base64"));
+    } else {
+      const existing = raw.toString();
+      for (const [k, v] of new URLSearchParams(existing)) {
+        if (!params.has(k)) params.set(k, v);
+      }
+    }
+
     const response = await fetch(target, {
       method: req.method || "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body,
+      body: params.toString(),
       redirect: "follow",
     });
     const text = await response.text();
