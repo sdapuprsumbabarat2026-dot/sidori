@@ -273,13 +273,14 @@ export default function AreaDocumentsPage() {
       });
       setUploadProgress(25);
 
+      const token = crypto.randomUUID().replace(/-/g, "");
       const form = document.createElement("form");
       form.method = "POST";
       form.action = import.meta.env.VITE_GAS_URL;
       form.target = "upload_popup";
 
       const fields: Record<string, string> = {
-        _format: "iframe", apiKey: GAS_API_KEY, fileBase64,
+        apiKey: GAS_API_KEY, fileBase64, token,
         fileName: toUpload.name, mimeType: toUpload.type,
         irigationType: area.irrigation_types?.name || "", areaName: area.name, year: uploadYear,
       };
@@ -290,10 +291,10 @@ export default function AreaDocumentsPage() {
       }
       document.body.appendChild(form);
 
-      if (!uploadPopupRef.current || uploadPopupRef.current.closed) {
-        uploadPopupRef.current = window.open("about:blank", "upload_popup", "width=500,height=400");
-      }
-      if (!uploadPopupRef.current) {
+      const popup = uploadPopupRef.current && !uploadPopupRef.current.closed
+        ? uploadPopupRef.current
+        : window.open("about:blank", "upload_popup", "width=500,height=400");
+      if (!popup) {
         toast.error("Popup diblokir browser. Izinkan popup untuk upload.");
         setUploadPhase("error"); return;
       }
@@ -301,16 +302,25 @@ export default function AreaDocumentsPage() {
       const sim = setInterval(() => setUploadProgress((p) => Math.min(p + 1, 95)), 500);
       const result = await new Promise<any>((resolve, reject) => {
         const timer = setTimeout(() => { cleanup(); reject(new Error("timeout")); }, 300000);
-        const handler = (e: MessageEvent) => {
-          const d = (typeof e.data === "string" ? JSON.parse(e.data) : e.data);
-          if (d && (d.fileUrl || d.error)) { clearTimeout(timer); cleanup(); resolve(d); }
+        const globalVar = "window.__sidoriUpload_" + token;
+        const poll = () => {
+          const s = document.createElement("script");
+          s.src = import.meta.env.VITE_GAS_URL + "?token=" + token;
+          s.onload = () => {
+            try {
+              const d = (0, eval)(globalVar);
+              if (d && (d.fileUrl || d.error)) { clearTimeout(timer); cleanup(); resolve(d); }
+            } catch { /* not ready */ }
+          };
+          s.onerror = () => {};
+          document.body.appendChild(s);
         };
         const cleanup = () => {
-          window.removeEventListener("message", handler);
+          clearInterval(polling);
           if (form.parentNode) form.parentNode.removeChild(form);
-          if (uploadPopupRef.current && !uploadPopupRef.current.closed) uploadPopupRef.current.close();
+          if (!popup.closed) popup.close();
         };
-        window.addEventListener("message", handler);
+        const polling = setInterval(poll, 2500);
         form.submit();
       });
       clearInterval(sim);

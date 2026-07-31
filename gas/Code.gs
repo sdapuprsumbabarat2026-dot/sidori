@@ -2,7 +2,15 @@ const FOLDER_NAME = "SIDORI"
 const TEMP_FOLDER = "Temp"
 const API_KEY = "sidori-2026"
 
-function doGet() {
+function doGet(e) {
+  const token = (e && e.parameter && e.parameter.token) || ""
+  if (token) {
+    const res = CacheService.getScriptCache().get("upload_" + token)
+    if (res) {
+      return ContentService.createTextOutput("window.__sidoriUpload_" + token + "=" + res + ";")
+        .setMimeType(ContentService.MimeType.JAVASCRIPT)
+    }
+  }
   return sendJson({ status: "ok" })
 }
 
@@ -10,14 +18,13 @@ function doPost(e) {
   const params = e.parameter
   if (params && params._method === "DELETE") return handleDelete(params)
   if (params && params._method === "MOVE") return handleMove(params)
-  const isIframe = params && params._format === "iframe"
 
   try {
     const data = params
-    if (data.apiKey !== API_KEY) return respond(isIframe, { error: "Invalid API key" }, 403)
+    if (data.apiKey !== API_KEY) return sendJson({ error: "Invalid API key" }, 403)
 
     const { fileBase64, fileName, mimeType, year, irigationType, areaName } = data
-    if (!fileBase64 || !fileName) return respond(isIframe, { error: "Missing required fields" }, 400)
+    if (!fileBase64 || !fileName) return sendJson({ error: "Missing required fields" }, 400)
 
     const root = ensureFolder(FOLDER_NAME)
     let file
@@ -35,9 +42,16 @@ function doPost(e) {
     }
 
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW)
-    return respond(isIframe, { success: true, fileId: file.getId(), fileUrl: file.getUrl() })
+    const result = { success: true, fileId: file.getId(), fileUrl: file.getUrl() }
+    if (data.token) {
+      CacheService.getScriptCache().put("upload_" + data.token, JSON.stringify(result), 300)
+    }
+    return sendJson(result)
   } catch (err) {
-    return respond(isIframe, { error: err.message }, 500)
+    if (params.token) {
+      CacheService.getScriptCache().put("upload_" + params.token, JSON.stringify({ error: err.message }), 300)
+    }
+    return sendJson({ error: err.message }, 500)
   }
 }
 
@@ -70,18 +84,6 @@ function handleDelete(params) {
   } catch (err) {
     return sendJson({ error: err.message }, 500)
   }
-}
-
-function respond(iframe, data, status) {
-  if (iframe) return sendHtmlResult(data)
-  return sendJson(data, status)
-}
-
-function sendHtmlResult(data) {
-  const base = "https://sidori.vercel.app/upload-callback.html"
-  const url = base + "?result=" + encodeURIComponent(JSON.stringify(data))
-  const html = '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=' + url + '"></head><body>Uploading...</body></html>'
-  return ContentService.createTextOutput(html).setMimeType(ContentService.MimeType.HTML)
 }
 
 function sendJson(data) {
