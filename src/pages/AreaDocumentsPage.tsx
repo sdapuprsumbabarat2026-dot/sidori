@@ -268,33 +268,16 @@ export default function AreaDocumentsPage() {
       setUploadProgress(25);
 
       const token = crypto.randomUUID().replace(/-/g, "");
-      let iframe = document.querySelector('iframe[name="upload_frame"]') as HTMLIFrameElement | null;
-      if (!iframe) {
-        iframe = document.createElement("iframe");
-        iframe.name = "upload_frame";
-        iframe.style.display = "none";
-        document.body.appendChild(iframe);
-      }
-      const form = document.createElement("form");
-      form.method = "POST";
-      form.action = import.meta.env.VITE_GAS_URL;
-      form.target = "upload_frame";
-
       const fields: Record<string, string> = {
         apiKey: GAS_API_KEY, fileBase64, token,
         fileName: toUpload.name, mimeType: toUpload.type,
         irigationType: area.irrigation_types?.name || "", areaName: area.name, year: uploadYear,
       };
-      for (const [k, v] of Object.entries(fields)) {
-        const el = document.createElement("input");
-        el.type = "hidden"; el.name = k; el.value = v;
-        form.appendChild(el);
-      }
-      document.body.appendChild(form);
+      fetch(import.meta.env.VITE_GAS_URL, { method: "POST", body: new URLSearchParams(fields) }).catch(() => {});
 
       const sim = setInterval(() => setUploadProgress((p) => Math.min(p + 1, 95)), 500);
       const result = await new Promise<any>((resolve, reject) => {
-        const timer = setTimeout(() => { cleanup(); reject(new Error("timeout")); }, 300000);
+        const timer = setTimeout(() => reject(new Error("timeout")), 300000);
         const globalVar = "window.__sidoriUpload_" + token;
         const poll = () => {
           const s = document.createElement("script");
@@ -302,18 +285,14 @@ export default function AreaDocumentsPage() {
           s.onload = () => {
             try {
               const d = (0, eval)(globalVar);
-              if (d && (d.fileUrl || d.error)) { clearTimeout(timer); cleanup(); resolve(d); }
+              if (d && (d.fileUrl || d.error)) { clearTimeout(timer); clearInterval(polling); resolve(d); }
             } catch { /* not ready */ }
           };
           s.onerror = () => {};
           document.body.appendChild(s);
         };
-        const cleanup = () => {
-          clearInterval(polling);
-          if (form.parentNode) form.parentNode.removeChild(form);
-        };
         const polling = setInterval(poll, 2500);
-        form.submit();
+        poll();
       });
       clearInterval(sim);
 
